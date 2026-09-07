@@ -50,7 +50,9 @@ schedule-anchored at the plaza (movement proven separately).
 `slice_test` plays the whole scenario headlessly (approach → E → answers
 → quest → claim → save → reload → variant flip → panel pixel counts);
 `font_test` covers glyphs/clipping. CI smoke still passes; firmware
-`.bin` +24 B (F5/F9 key codes), `.bss` unchanged.
+`.bin` +24 B (F5/F9 key codes), `.bss` unchanged. Two real bugs caught
+before release: Windows has no `/tmp` (test save path is now relative +
+gitignored), and the panel wrap buffer is hardened for long content.
 
 ## Next (Phase 15 — Language-aware dialogue)
 
