@@ -79,7 +79,8 @@ static void print_memory_breakdown(){
               << ((520u*1024u > embedded_single) ? (520u*1024u-embedded_single)/kib : 0.0) << " KiB\n"
               << "[MEM]   NOTE: resource-work/audio/commands/stack are deterministic upper bounds, not measured live usage.\n";
 }
-int main(){
+int main(int argc, char* argv[]){
+    (void)argc; (void)argv; // SDL2 entry-point signature; no CLI args used.
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS)!=0){ std::fprintf(stderr,"SDL_Init failed: %s\n",SDL_GetError()); return 1; }
     constexpr int TARGET_W = 1920;
     constexpr int TARGET_H = 1080;

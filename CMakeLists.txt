@@ -182,12 +182,13 @@ else()
   )
   target_compile_definitions(language3d PRIVATE L3D_PC_PROFILE=1)
   target_compile_options(language3d PRIVATE ${LANGUAGE3D_WARNING_FLAGS})
-  # NOTE: SDL2main is intentionally not linked. The frontend defines a plain
-  # `int main()` entry point and runs in the console subsystem on every
-  # desktop OS, so the SDL2main WinMain shim (which requires an
-  # `SDL_main(argc, argv)` definition) is unnecessary and would break the
-  # MSVC link.
+  # SDL2main provides the Windows WinMain shim and forwards to SDL_main
+  # (which SDL.h maps from main()). It is a no-op on pkg-config platforms
+  # where the SDL2main target does not exist.
   target_link_libraries(language3d PRIVATE ${LANGUAGE3D_SDL2_TARGET})
+  if(TARGET SDL2::SDL2main)
+    target_link_libraries(language3d PRIVATE SDL2::SDL2main)
+  endif()
   if(MINGW)
     target_link_options(language3d PRIVATE -mconsole)
   endif()
