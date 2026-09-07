@@ -1,0 +1,114 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "description": "Host SDL2 game + tests, Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-linux-debug",
+      "cacheVariables": {
+        "LANGUAGE3D_PLATFORM": "host",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LANGUAGE3D_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "description": "Host SDL2 game + tests, Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-linux",
+      "cacheVariables": {
+        "LANGUAGE3D_PLATFORM": "host",
+        "CMAKE_BUILD_TYPE": "Release",
+        "LANGUAGE3D_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows Release",
+      "description": "Host SDL2 game + tests, Release (default Visual Studio generator)",
+      "binaryDir": "${sourceDir}/build-windows",
+      "cacheVariables": {
+        "LANGUAGE3D_PLATFORM": "host",
+        "LANGUAGE3D_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows Debug",
+      "description": "Host SDL2 game + tests, Debug (default Visual Studio generator)",
+      "binaryDir": "${sourceDir}/build-windows-debug",
+      "cacheVariables": {
+        "LANGUAGE3D_PLATFORM": "host",
+        "LANGUAGE3D_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "rp2040-release",
+      "displayName": "RP2040 Release",
+      "description": "Production RP2040/ST7789 game firmware (needs PICO_SDK_PATH)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-rp2040",
+      "cacheVariables": {
+        "LANGUAGE3D_PLATFORM": "rp2040",
+        "PICO_BOARD": "pico",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release"
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "rp2040-release",
+      "configurePreset": "rp2040-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

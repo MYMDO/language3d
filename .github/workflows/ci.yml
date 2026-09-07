@@ -1,0 +1,145 @@
+# Continuous integration: Linux + Windows + RP2040 builds and host tests.
+# Runs on every push and pull request. Versioned GitHub Releases are handled
+# separately by release.yml (only for v* tags).
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
+  pull_request:
+
+env:
+  PICO_SDK_TAG: "2.3.0"
+
+jobs:
+  build-linux:
+    name: Linux build + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ pkg-config libsdl2-dev python3
+
+      - name: Configure
+        run: cmake --preset linux-release
+
+      - name: Build
+        run: cmake --build --preset linux-release
+
+      - name: Test
+        run: ctest --preset linux-release
+
+      - name: Package
+        run: ./tools/package-linux.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: language3d-linux-x86_64
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows build + tests (native MSVC, no MSYS2)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SDL2 via vcpkg
+        run: vcpkg install sdl2:x64-windows
+
+      - name: Configure
+        run: >
+          cmake -S . -B build-windows -DLANGUAGE3D_PLATFORM=host
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build
+        run: cmake --build build-windows --config Release
+
+      - name: Test
+        run: ctest --test-dir build-windows -C Release --output-on-failure
+
+      - name: Package
+        run: powershell -ExecutionPolicy Bypass -File tools\package-windows.ps1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: language3d-windows-x86_64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  build-rp2040:
+    name: RP2040 firmware
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build python3 \
+            gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+
+      - name: Cache Pico SDK
+        id: pico-sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: pico-sdk
+          key: pico-sdk-${{ env.PICO_SDK_TAG }}
+
+      - name: Fetch Pico SDK
+        if: steps.pico-sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --branch "${PICO_SDK_TAG}" --depth 1 \
+            https://github.com/raspberrypi/pico-sdk.git pico-sdk
+          git -C pico-sdk submodule update --init --depth 1
+
+      - name: Reproducibility guard (no developer-local paths)
+        run: |
+          if grep -rn --include='*.txt' --include='*.cmake' --include='*.json' --include='*.y*ml' \
+              -e '/home/wm' -e '/mnt/data' . --exclude-dir=pico-sdk --exclude-dir=build* .; then
+            echo "error: developer-local absolute path leaked into build files" >&2
+            exit 1
+          fi
+          echo "No developer-local paths in build configuration."
+
+      - name: Configure (clean directory, no stale cache)
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+        run: |
+          rm -rf build-rp2040
+          cmake -S . -B build-rp2040 \
+            -DLANGUAGE3D_PLATFORM=rp2040 \
+            -DPICO_SDK_PATH="${PICO_SDK_PATH}" \
+            -DPICO_BOARD=pico
+
+      - name: Build
+        run: cmake --build build-rp2040
+
+      - name: Verify firmware artifacts
+        run: |
+          ls -la build-rp2040/language3d_rp2040.uf2 \
+                 build-rp2040/language3d_rp2040.bin \
+                 build-rp2040/language3d_rp2040.hex \
+                 build-rp2040/language3d_rp2040.elf \
+                 build-rp2040/language3d_rp2040.elf.map
+
+      - name: Package
+        run: ./tools/package-rp2040.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: language3d-rp2040-firmware
+          path: |
+            dist/*.uf2
+            dist/*.bin
+            dist/*.hex
+            dist/*-debug.zip
+          if-no-files-found: error

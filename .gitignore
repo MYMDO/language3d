@@ -1,0 +1,58 @@
+# Build directories (all platforms, all generators/presets)
+build/
+build-*/
+dist/
+out/
+
+# CMake-generated state
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+install_manifest.txt
+*.cmake.user
+
+# Compiled objects / libraries
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.pdb
+*.ilk
+*.exp
+
+# In-tree legacy Make output
+language3d_mvp
+language3d
+
+# Firmware / debug artifacts ship via GitHub Actions artifacts & Releases,
+# never through Git.
+*.elf
+*.map
+*.bin
+*.hex
+*.uf2
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
