@@ -9,7 +9,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -67,5 +67,9 @@ entity-test:
 	$(CXX) $(CXXFLAGS) -Iengine engine/entity.cpp engine/math.cpp tests/entity_test.cpp -o /tmp/l3d_entity_test
 	/tmp/l3d_entity_test
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test
+npc-test:
+	$(CXX) $(CXXFLAGS) -Iengine engine/npc.cpp engine/entity.cpp engine/math.cpp tests/npc_test.cpp -o /tmp/l3d_npc_test
+	/tmp/l3d_npc_test
+
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test
 	@echo "CORE HOST TESTS PASSED"

@@ -77,14 +77,15 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 0 — Audit | gap analysis, architecture plan | ✅ done (`docs/architecture.md`) |
 | Phase 1 — Platform abstraction | thin Platform API + backends | ✅ done, shipped **v0.36.0** |
 | Phase 2 — True 3D world | X/Y/Z model, heights, volumes | ✅ done, shipped **v0.35.0** |
-| Phase 3 — Entity system | Entity/Transform/Collider pools | next → **v0.37.0** |
-| Phase 4 — NPC | entities with schedules, no dialogue yet | planned |
-| Phase 5 — Dialogue | data-driven dialogue trees | planned |
-| Phase 6 — Items / Inventory | pickup/use/give/trade | planned |
-| Phase 7 — Quests | objectives, triggers, rewards | planned |
-| Phase 8 — Language system | vocabulary/grammar/mastery/adaptive | planned |
-| Phase 9 — Save / Progression | persistent versioned state | planned |
-| Phase 10 — Vertical slice | playable educational scenario | planned |
+| Phase 3 — Entity system | Entity/Transform/Collider pools | ✅ done, shipped **v0.37.0** |
+| Phase 4 — NPC | NPC foundation (no dialogue/schedules yet) | ✅ done, shipped **v0.38.0** |
+| Phase 5 — NPC schedule | deterministic timetables | planned |
+| Phase 6 — Dialogue | data-driven dialogue trees | planned |
+| Phase 7 — Items / Inventory | pickup/use/give/trade | planned |
+| Phase 8 — Quests | objectives, triggers, rewards | planned |
+| Phase 9 — Language system | vocabulary/grammar/mastery/adaptive | planned |
+| Phase 10 — Save / Progression | persistent versioned state | planned |
+| Phase 11 — Vertical slice | playable educational scenario | planned |
 
 Note: phase numbers are logical, not chronological — Phase 2 (world)
 landed as v0.35.0 *before* Phase 1 (platform) as v0.36.0. That is
