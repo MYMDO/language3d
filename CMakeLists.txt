@@ -90,6 +90,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/renderer.cpp
     engine/assets.cpp
     engine/api.cpp
+    engine/world3.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -132,6 +133,7 @@ else()
     engine/renderer.cpp
     engine/assets.cpp
     engine/api.cpp
+    engine/world3.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -251,6 +253,7 @@ else()
     language3d_add_test(v23_input_test v23_input_test.cpp)
     language3d_add_test(v24_camera_alignment_test v24_camera_alignment_test.cpp)
     language3d_add_test(world_test world_test.cpp)
+    language3d_add_test(world3_test world3_test.cpp)
 
     # Map connectivity guard (gameplay start must reach the NPC target).
     find_package(Python3 COMPONENTS Interpreter REQUIRED)

@@ -9,7 +9,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -55,5 +55,9 @@ generated-assets-test: $(GENERATED_ASSET_SRC)
 map-path-test:
 	python3 tools/validate_map_path.py assets/map.txt 4 4 18 18
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test
+world3-test:
+	$(CXX) $(CXXFLAGS) -Iengine engine/world3.cpp engine/math.cpp tests/world3_test.cpp -o /tmp/l3d_world3_test
+	/tmp/l3d_world3_test
+
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test
 	@echo "CORE HOST TESTS PASSED"
