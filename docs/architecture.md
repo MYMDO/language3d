@@ -61,7 +61,7 @@ Language3D
 ├── Platform API (platform/api/): init/time/events/keys/framebuffer/audio*
 │   ├── SDL2 backend      ├── RP2040 native backend      └── null backend
 ├── Gameplay systems (phased): NPC, Dialogue, Quest, Inventory, Language, Save
-├── Content (data-driven, validated; Phase 11+)
+├── Content (data-driven, validated; later phase)
 └── Platform mains (thin loops: events → sim ticks → render → present)
 ```
 
@@ -79,8 +79,8 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 2 — True 3D world | X/Y/Z model, heights, volumes | ✅ done, shipped **v0.35.0** |
 | Phase 3 — Entity system | Entity/Transform/Collider pools | ✅ done, shipped **v0.37.0** |
 | Phase 4 — NPC | NPC foundation (no dialogue/schedules yet) | ✅ done, shipped **v0.38.0** |
-| Phase 5 — NPC schedule | deterministic timetables | planned |
-| Phase 6 — Dialogue | data-driven dialogue trees | planned |
+| Phase 5 — NPC schedule | location-ID timetables + game clock | ✅ done, shipped **v0.39.0** |
+| Phase 6 — Dialogue | data-driven dialogue trees | next |
 | Phase 7 — Items / Inventory | pickup/use/give/trade | planned |
 | Phase 8 — Quests | objectives, triggers, rewards | planned |
 | Phase 9 — Language system | vocabulary/grammar/mastery/adaptive | planned |
