@@ -107,6 +107,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/quest.cpp
     engine/dialogue_quest.cpp
     engine/language.cpp
+    engine/save.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -162,6 +163,7 @@ else()
     engine/quest.cpp
     engine/dialogue_quest.cpp
     engine/language.cpp
+    engine/save.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -374,6 +376,10 @@ else()
       ${GENERATED_VOCAB_SRC})
     add_dependencies(language_scenario_test
       language3d_dialogues language3d_quests language3d_items
+      language3d_vocab)
+    language3d_add_test(save_test save_test.cpp
+      ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC} ${GENERATED_VOCAB_SRC})
+    add_dependencies(save_test language3d_quests language3d_items
       language3d_vocab)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)

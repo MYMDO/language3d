@@ -13,7 +13,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test validate-content
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -135,11 +135,15 @@ language-scenario-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENER
 	$(CXX) $(CXXFLAGS) -Iengine engine/language.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC) tests/language_scenario_test.cpp -o /tmp/l3d_language_scenario_test
 	/tmp/l3d_language_scenario_test
 
+save-test: $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine engine/save.cpp engine/language.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC) tests/save_test.cpp -o /tmp/l3d_save_test
+	/tmp/l3d_save_test
+
 validate-content:
 	python3 tools/build_dialogue.py --check content/dialogues
 	python3 tools/build_items.py --check content/items
 	python3 tools/build_quests.py --check content/quests
 	python3 tools/build_vocab.py --check content/vocabulary
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test
 	@echo "CORE HOST TESTS PASSED"
