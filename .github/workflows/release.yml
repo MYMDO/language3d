@@ -45,14 +45,25 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install SDL2 via vcpkg
-        run: vcpkg install sdl2:x64-windows
+      - name: Install SDL2 (static) via vcpkg
+        run: vcpkg install sdl2:x64-windows-static
       - name: Build + test
         run: >
           cmake -S . -B build-windows -DLANGUAGE3D_PLATFORM=host
-          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake";
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static;
           cmake --build build-windows --config Release;
           ctest --test-dir build-windows -C Release --output-on-failure
+      - name: Set up MSVC environment (dumpbin)
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify dependency chain (system DLLs only)
+        run: |
+          dumpbin /DEPENDENTS build-windows\Release\language3d.exe
+          $deps = dumpbin /DEPENDENTS build-windows\Release\language3d.exe | Out-String
+          foreach ($bad in @('MSVCP', 'VCRUNTIME', 'SDL2.dll')) {
+            if ($deps -match $bad) { throw "forbidden runtime dependency found: $bad" }
+          }
+          Write-Host 'OK: no MSVC redistributable or SDL2.dll dependency.'
       - name: Package
         run: powershell -ExecutionPolicy Bypass -File tools\package-windows.ps1
       - uses: actions/upload-artifact@v4

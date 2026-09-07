@@ -24,6 +24,9 @@ $platformDoc = Join-Path $root 'docs\platforms\windows.md'
 if (Test-Path $platformDoc) { Copy-Item $platformDoc (Join-Path $pkgDir 'README-platform.md') }
 
 # Bundle the MSVC runtime + SDL2 next to the exe when they are discoverable.
+# NOTE: the canonical build (static MSVC runtime + static SDL2, see
+# docs/platforms/windows.md) needs no companion DLLs at all; this block only
+# exists for legacy shared-CRT builds and is a harmless no-op otherwise.
 $vcpkgBin = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed\x64-windows\bin\SDL2.dll'
 if (($env:VCPKG_INSTALLATION_ROOT) -and (Test-Path $vcpkgBin)) {
   Copy-Item $vcpkgBin (Join-Path $pkgDir 'SDL2.dll')

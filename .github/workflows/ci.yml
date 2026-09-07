@@ -50,19 +50,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install SDL2 via vcpkg
-        run: vcpkg install sdl2:x64-windows
+      # Static SDL2 (/MT CRT) so the game is a single self-contained .exe:
+      # no SDL2.dll and no VC Redistributable required on end-user machines.
+      - name: Install SDL2 (static) via vcpkg
+        run: vcpkg install sdl2:x64-windows-static
 
       - name: Configure
         run: >
           cmake -S . -B build-windows -DLANGUAGE3D_PLATFORM=host
           "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
 
       - name: Build
         run: cmake --build build-windows --config Release
 
       - name: Test
         run: ctest --test-dir build-windows -C Release --output-on-failure
+
+      - name: Set up MSVC environment (dumpbin)
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Verify dependency chain (system DLLs only)
+        run: |
+          dumpbin /DEPENDENTS build-windows\Release\language3d.exe
+          $deps = dumpbin /DEPENDENTS build-windows\Release\language3d.exe | Out-String
+          foreach ($bad in @('MSVCP', 'VCRUNTIME', 'SDL2.dll')) {
+            if ($deps -match $bad) { throw "forbidden runtime dependency found: $bad" }
+          }
+          Write-Host 'OK: no MSVC redistributable or SDL2.dll dependency.'
+
+      - name: Smoke launch (headless, dummy video driver)
+        run: |
+          $env:SDL_VIDEODRIVER = 'dummy'
+          $p = Start-Process -FilePath 'build-windows\Release\language3d.exe' `
+            -RedirectStandardOutput smoke-out.txt -RedirectStandardError smoke-err.txt -PassThru
+          Start-Sleep -Seconds 10
+          if ($p.HasExited) {
+            Get-Content smoke-out.txt, smoke-err.txt
+            throw "game exited early with code $($p.ExitCode)"
+          }
+          Stop-Process -Id $p.Id -Force
+          $log = Get-Content smoke-out.txt, smoke-err.txt -Raw
+          if ($log -notmatch '\[ASSET\]') {
+            Get-Content smoke-out.txt, smoke-err.txt
+            throw 'startup diagnostics missing from game output'
+          }
+          $log | Select-String '\[ASSET\]|\[ARCH\]' | Select-Object -First 4
 
       - name: Package
         run: powershell -ExecutionPolicy Bypass -File tools\package-windows.ps1

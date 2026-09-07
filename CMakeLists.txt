@@ -117,6 +117,15 @@ else()
   # ------------------------------------------------------------------ Host --
   # Desktop SDL2 build (Linux / Windows / macOS). Shares the exact same
   # platform-independent engine sources as the RP2040 firmware.
+  if(MSVC)
+    # Static MSVC runtime (/MT): the Windows game links the C/C++ runtime
+    # into the binary, so the release runs on clean Windows installs with
+    # no VC Redistributable required. SDL2 itself is consumed as a static
+    # library (vcpkg x64-windows-static triplet), therefore no DLL in the
+    # dependency chain needs the dynamic CRT either. Requires CMP0091 NEW,
+    # which is the default with this cmake_minimum_required.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
   set(LANGUAGE3D_ENGINE_SOURCES
     engine/game.cpp
     engine/math.cpp
