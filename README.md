@@ -22,6 +22,10 @@ Ready-to-use binaries are attached to every versioned
 - `language3d-<version>-rp2040.bin` / `.hex` — alternative firmware formats
 - `language3d-<version>-rp2040-debug.zip` — `.elf` + `.map` for debugging
 
+> **First time here?** Start with the
+> [`v0.50.0 public playtest`](PLAYTEST.md) (controls, checklist, known
+> limitations) before building from source.
+
 ## Build
 
 One command per platform (see [`docs/platforms/`](docs/platforms/) for details):
