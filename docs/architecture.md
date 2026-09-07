@@ -84,7 +84,8 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 7 — NPC interaction (6B) | proximity/target/session, pre-dialogue | ✅ done, shipped **v0.41.0** |
 | Phase 8 — Dialogue | data-driven trees + inert language metadata | ✅ done, shipped **v0.42.0** |
 | Phase 9 — Items / Inventory | defs/stacks/inventory, no trade yet | ✅ done, shipped **v0.43.0** |
-| Phase 10 — Player state | position/inventory/quest/language state union | next |
+| Phase 10 — Player state | entity ref + progression + runtime/persistent split | ✅ done, shipped **v0.44.0** |
+| Phase 11 — Quests | objectives, triggers, rewards | next |
 | Phase 11 — Quests | objectives, triggers, rewards | planned |
 | Phase 12 — Language system | vocabulary/grammar/mastery/adaptive | planned |
 | Phase 13 — Save / Progression | persistent versioned state | planned |

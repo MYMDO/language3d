@@ -11,7 +11,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test validate-content
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -101,9 +101,13 @@ item-test: $(GENERATED_ITEM_SRC)
 	$(CXX) $(CXXFLAGS) -Iengine engine/item.cpp $(GENERATED_ITEM_SRC) tests/item_test.cpp -o /tmp/l3d_item_test
 	/tmp/l3d_item_test
 
+player-test:
+	$(CXX) $(CXXFLAGS) -Iengine engine/player.cpp engine/item.cpp tests/player_test.cpp -o /tmp/l3d_player_test
+	/tmp/l3d_player_test
+
 validate-content:
 	python3 tools/build_dialogue.py --check content/dialogues
 	python3 tools/build_items.py --check content/items
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test
 	@echo "CORE HOST TESTS PASSED"
