@@ -85,11 +85,11 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 8 — Dialogue | data-driven trees + inert language metadata | ✅ done, shipped **v0.42.0** |
 | Phase 9 — Items / Inventory | defs/stacks/inventory, no trade yet | ✅ done, shipped **v0.43.0** |
 | Phase 10 — Player state | entity ref + progression + runtime/persistent split | ✅ done, shipped **v0.44.0** |
-| Phase 11 — Quests | objectives, triggers, rewards | next |
-| Phase 11 — Quests | objectives, triggers, rewards | planned |
-| Phase 12 — Language system | vocabulary/grammar/mastery/adaptive | planned |
-| Phase 13 — Save / Progression | persistent versioned state | planned |
-| Phase 14 — Vertical slice | playable educational scenario | planned |
+| Phase 11 — Quests (A) | defs/state/objectives/conditions, no rewards yet | ✅ done, shipped **v0.45.0** |
+| Phase 12 — Quest integration (B) | rewards + dialogue wiring + playable quest | next |
+| Phase 13 — Language system | vocabulary/grammar/mastery/adaptive | planned |
+| Phase 14 — Save / Progression | persistent versioned state | planned |
+| Phase 15 — Vertical slice | playable educational scenario | planned |
 
 Note: phase numbers are logical, not chronological — Phase 2 (world)
 landed as v0.35.0 *before* Phase 1 (platform) as v0.36.0. That is

@@ -1,0 +1,11 @@
+# Getting to the Station (Roadmap Phase 11A).
+# Tags share content namespaces: npc 1=Anna, npc 2=clerk,
+# location 3=station district, item 2=station ticket.
+
+quest 1
+title Getting to the Station
+description Ask Anna for directions, reach the station district, collect a ticket and give it to the clerk.
+objective TALK tag=1
+objective REACH tag=3
+objective COLLECT item=2 count=1
+objective GIVE item=2 count=1 npc=2

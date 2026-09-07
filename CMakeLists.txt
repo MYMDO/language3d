@@ -104,6 +104,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/dialogue.cpp
     engine/item.cpp
     engine/player.cpp
+    engine/quest.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -156,6 +157,7 @@ else()
     engine/dialogue.cpp
     engine/item.cpp
     engine/player.cpp
+    engine/quest.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -208,6 +210,22 @@ else()
     VERBATIM
   )
   add_custom_target(language3d_items DEPENDS ${GENERATED_ITEM_SRC})
+
+  # Build-time quest content (content/quests/*.quest -> C++ tables).
+  file(GLOB LANGUAGE3D_QUEST_SRC CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/content/quests/*.quest)
+  set(GENERATED_QUEST_SRC ${CMAKE_CURRENT_BINARY_DIR}/generated_quests.cpp)
+  add_custom_command(
+    OUTPUT ${GENERATED_QUEST_SRC}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_quests.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/content/quests
+            ${GENERATED_QUEST_SRC}
+    DEPENDS
+        ${LANGUAGE3D_QUEST_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_quests.py
+    VERBATIM
+  )
+  add_custom_target(language3d_quests DEPENDS ${GENERATED_QUEST_SRC})
 
   add_library(language3d_core STATIC ${LANGUAGE3D_ENGINE_SOURCES})
   target_include_directories(language3d_core PUBLIC
@@ -321,6 +339,8 @@ else()
     language3d_add_test(item_test item_test.cpp ${GENERATED_ITEM_SRC})
     add_dependencies(item_test language3d_items)
     language3d_add_test(player_test player_test.cpp)
+    language3d_add_test(quest_test quest_test.cpp ${GENERATED_QUEST_SRC})
+    add_dependencies(quest_test language3d_quests)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
     target_include_directories(platform_test PRIVATE
