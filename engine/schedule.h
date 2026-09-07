@@ -80,7 +80,13 @@ struct SchedulePool {
     size_t live{0};
 
     void init() {
-        for (size_t i = 0; i < N; ++i) slots[i] = Slot{};
+        // NOTE: field-wise reset, not `slots[i] = Slot{}`. Value-assigning
+        // a temporary of an array-member struct inside a template ICEs
+        // several GCC releases (gimple_add_tmp_var); field stores do not.
+        for (size_t i = 0; i < N; ++i) {
+            slots[i].npc = L3D_NPC_INVALID;
+            slots[i].count = 0;
+        }
         live = 0;
     }
 
@@ -109,7 +115,9 @@ struct SchedulePool {
     bool clear(uint16_t npc) {
         for (size_t i = 0; i < N; ++i) {
             if (slots[i].npc == npc) {
-                slots[i] = Slot{};
+                // Field-wise reset (see init(): no Slot{} assignment).
+                slots[i].npc = L3D_NPC_INVALID;
+                slots[i].count = 0;
                 --live;
                 return true;
             }
