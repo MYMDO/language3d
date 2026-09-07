@@ -1,11 +1,11 @@
-# Phase 1 — True 3D world model
+# True 3D world model (Roadmap Phase 2, shipped v0.35.0)
 
-Status: implemented (v0.35.0). Additive only: the 2.5D raycaster, `Game`,
+Status: implemented. Additive only: the 2.5D raycaster, `Game`,
 the C ABI, all platform layers and all pre-existing tests are untouched.
 
 ## Principle: World 3D ≠ Rendering 3D
 
-Phase 1 introduces a **three-dimensional world model** while the renderer
+Roadmap Phase 2 introduces a **three-dimensional world model** while the renderer
 stays 2.5D. Geometry, locomotion and volumes are real and tested; pixels
 catch up in a later phase. This keeps every existing target (including the
 RP2040 firmware) working at each step.
@@ -51,7 +51,7 @@ Z = height (up)
 Per authored cell: 1 byte floor (+1 byte optional ceiling), resident in
 flash via zero-copy views — e.g. a 76×76 level costs ~5.6 KiB of flash,
 0 bytes of SRAM beyond the caller's `Vec3`. No `World3` state struct
-exists yet; that arrives with the entity system (Phase 2).
+exists yet; that arrives with the entity system (Roadmap Phase 3).
 
 ## Tested behavior (`tests/world3_test.cpp`, 19-test CTest suite)
 
@@ -60,9 +60,9 @@ tracking, too-tall step denied, low ceiling denied, walk under bridge,
 trigger enter/exit + exclusive max bound, region tag lookup,
 `world3_selfcheck()`.
 
-## Explicitly NOT in Phase 1
+## Explicitly NOT in this milestone
 
 Renderer changes, `Game`/ABI changes, entities, NPCs, items, quests,
 language data, JSON content, save system, jumping/falling physics,
-multi-level rendering. Next: **Phase 2 — entity system**
+multi-level rendering. Next: **Roadmap Phase 3 — entity system**
 (`Entity` + `Transform3` + type tag + fixed pool, still no heap).

@@ -65,13 +65,13 @@ RP2040 buttons and ST7789 wiring: [`docs/platforms/rp2040.md`](docs/platforms/rp
 ## Tests
 
 ```bash
-./tools/test.sh          # full host suite via CTest (20 tests)
+./tools/test.sh          # full host suite via CTest (21 tests)
 make test-all            # legacy Make wrapper (core subset)
 ```
 
 The suite covers engine core, renderer, assets, generated pack integrity,
-input, world/doors, camera alignment, map connectivity, the Phase-1 3D
-world model and the Platform API contract (null backend). RP2040 display
+input, world/doors, camera alignment, map connectivity, the 3D
+world model (Roadmap Phase 2) and the Platform API contract (null backend). RP2040 display
 and input require real hardware: CI verifies firmware compilation, linking
 and artifact presence, and documents hardware testing as a manual step.
 
@@ -79,11 +79,12 @@ and artifact presence, and documents hardware testing as a manual step.
 
 Language3D evolves from tech MVP toward a 3D language-learning game
 platform: explore → see → understand → talk → act → solve → reward →
-remember. The engine grows in additive phases, each keeping all targets
-green. Game/platform separation is enforced by the thin Platform API
-(`platform/api/l3d_platform.h`, backends for SDL2 / RP2040 / null) —
-see [`docs/architecture.md`](docs/architecture.md) and
-[`docs/architecture/phase1-world3d.md`](docs/architecture/phase1-world3d.md).
+remember. The engine grows in additive roadmap phases (see the phase table
+in [`docs/architecture.md`](docs/architecture.md)), each keeping all
+targets green. Game/platform separation is enforced by the thin Platform
+API (`platform/api/l3d_platform.h`, backends for SDL2 / RP2040 / null);
+the 3D world model lives in
+[`docs/architecture/world-model.md`](docs/architecture/world-model.md).
 
 ## Releases
 

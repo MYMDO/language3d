@@ -91,7 +91,9 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/renderer.cpp
     engine/assets.cpp
     engine/api.cpp
+    engine/api.cpp
     engine/world3.cpp
+    engine/entity.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -136,6 +138,7 @@ else()
     engine/assets.cpp
     engine/api.cpp
     engine/world3.cpp
+    engine/entity.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -258,6 +261,7 @@ else()
     language3d_add_test(v24_camera_alignment_test v24_camera_alignment_test.cpp)
     language3d_add_test(world_test world_test.cpp)
     language3d_add_test(world3_test world3_test.cpp)
+    language3d_add_test(entity_test entity_test.cpp)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
     target_include_directories(platform_test PRIVATE

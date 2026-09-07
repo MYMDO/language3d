@@ -1,4 +1,4 @@
-# Platform API (brief Phase 1, v0.36.0)
+# Platform API (Roadmap Phase 1, shipped v0.36.0)
 
 Contract: `platform/api/l3d_platform.h` — pure C, fixed-size types, no heap
 on the caller, single-threaded. Covers lifecycle, monotonic time, input

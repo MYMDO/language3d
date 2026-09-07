@@ -12,7 +12,7 @@ engine/            platform-independent core (verified: zero SDL/Pico/OS include
 ├── world.h        DoorSystem<N> runtime overlay over immutable packed map
 ├── entities.h     EntityPool / SpriteBatch (fixed-size, allocation-free)
 ├── world_grid.h   WorldGridView: zero-copy 16×16 chunk view
-├── transform3.h / world3.h (.cpp)  Phase-1 3D world MODEL (standalone, tested)
+├── transform3.h / world3.h (.cpp)  3D world MODEL (standalone, tested)
 └── math/capabilities/resource_cache
 
 platform/sdl2/main.cpp        desktop loop: SDL events → latch → sim ticks →
@@ -67,13 +67,28 @@ Language3D
 
 `*audio: interface reserved, null-only until a real need appears (no overengineering).`
 
-## 5. Phase map (brief Etap 30)
+## 5. Roadmap phases vs versions (single notation)
 
-- v0.35.0 — brief Phase 2-partial (world3 model) + Phase 3-partial (`walk_move`).
-- **v0.36.0 — brief Phase 1: thin Platform API (this milestone).**
-- Next: brief Phase 4 (entity system) → wire world3 into Game → renderer
-  adaptation → NPC/dialogue/items/quests/language/save → content validation
-  → vertical slice. One phase per commit(s), all targets green each time.
+Roadmap phases are **logical milestones**; versions are **chronological
+releases**. The two sequences are tracked separately and never mixed:
+
+| Roadmap phase | Scope | Status |
+|---|---|---|
+| Phase 0 — Audit | gap analysis, architecture plan | ✅ done (`docs/architecture.md`) |
+| Phase 1 — Platform abstraction | thin Platform API + backends | ✅ done, shipped **v0.36.0** |
+| Phase 2 — True 3D world | X/Y/Z model, heights, volumes | ✅ done, shipped **v0.35.0** |
+| Phase 3 — Entity system | Entity/Transform/Collider pools | next → **v0.37.0** |
+| Phase 4 — NPC | entities with schedules, no dialogue yet | planned |
+| Phase 5 — Dialogue | data-driven dialogue trees | planned |
+| Phase 6 — Items / Inventory | pickup/use/give/trade | planned |
+| Phase 7 — Quests | objectives, triggers, rewards | planned |
+| Phase 8 — Language system | vocabulary/grammar/mastery/adaptive | planned |
+| Phase 9 — Save / Progression | persistent versioned state | planned |
+| Phase 10 — Vertical slice | playable educational scenario | planned |
+
+Note: phase numbers are logical, not chronological — Phase 2 (world)
+landed as v0.35.0 *before* Phase 1 (platform) as v0.36.0. That is
+intentional: each phase ships when its API and tests are stable.
 
 ## 6. Invariants for every phase
 
