@@ -5,6 +5,7 @@
 quest 1
 title Getting to the Station
 description Ask Anna for directions, reach the station district, collect a ticket and give it to the clerk.
+topic 1
 reward XP:100
 reward FLAG:5
 objective TALK tag=1

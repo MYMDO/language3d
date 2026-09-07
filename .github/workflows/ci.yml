@@ -55,6 +55,8 @@ jobs:
         run: python3 tools/build_items.py --check content/items
       - name: Validate quest content
         run: python3 tools/build_quests.py --check content/quests
+      - name: Validate vocabulary content
+        run: python3 tools/build_vocab.py --check content/vocabulary
 
   build-windows:
     name: Windows build + tests (native MSVC, no MSYS2)

@@ -81,7 +81,7 @@ def parse_quest_file(path):
             if not m or not (1 <= int(m.group(1)) <= 65534):
                 raise Fail(where + ": bad quest id")
             cur = {"id": int(m.group(1)), "title": None, "desc": None,
-                   "prereqs": [], "rewards": [], "objectives": []}
+                   "topic": 0, "prereqs": [], "rewards": [], "objectives": []}
         elif cur is None:
             raise Fail(where + ": directive outside quest")
         elif head == "title":
@@ -92,6 +92,11 @@ def parse_quest_file(path):
             if cur["desc"] is not None or not (1 <= len(rest.strip()) <= MAX_DESC):
                 raise Fail(where + ": bad description")
             cur["desc"] = rest.strip()
+        elif head == "topic":
+            m = re.fullmatch(r"(\d+)", rest.strip())
+            if not m or int(m.group(1)) > 65534:
+                raise Fail(where + ": bad topic")
+            cur["topic"] = int(m.group(1))
         elif head == "prereq":
             m = re.fullmatch(r"(\d+) (ACTIVE|COMPLETED|CLAIMED)", rest.strip())
             if not m:
@@ -210,10 +215,10 @@ def emit(quests, out_path):
                 cond_emit(o["cond"])))
         while len(obs) < MAX_OBJECTIVES:
             obs.append("{0, 0, 0, 1, 0, {0, 0, 0, 0, 0, 0, 0}}")
-        parts.append("    {%d, title_%d, desc_%d, %d, {%s}, %d, {%s}, %d, {%s}}," % (
+        parts.append("    {%d, title_%d, desc_%d, %d, {%s}, %d, {%s}, %d, {%s}, %d}," % (
             q["id"], q["id"], q["id"], len(q["prereqs"]), ", ".join(pre),
             len(q["objectives"]), ", ".join(obs),
-            len(q["rewards"]), ", ".join(rws)))
+            len(q["rewards"]), ", ".join(rws), q["topic"]))
     parts.append("};")
     parts.append("")
     parts.append("} // namespace")

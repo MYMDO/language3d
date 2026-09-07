@@ -1,0 +1,57 @@
+# Ukrainian -> English starter set (Roadmap Phase 12).
+# Ids shared with dialogue/item metadata: 101-113 interaction/transport,
+# 201-205 food/travel/objects. Categories are content labels.
+
+vocab 101 lang=en pos=phrase cefr=A1 cat=greeting
+lemma hello
+
+vocab 102 lang=en pos=verb cefr=A1 cat=help
+lemma help
+
+vocab 103 lang=en pos=noun cefr=A1 cat=transport
+lemma station
+
+vocab 104 lang=en pos=noun cefr=A2 cat=direction
+lemma direction
+
+vocab 105 lang=en pos=phrase cefr=A1 cat=courtesy
+lemma thank you
+
+vocab 106 lang=en pos=phrase cefr=A1 cat=courtesy
+lemma goodbye
+
+vocab 107 lang=en pos=phrase cefr=A1 cat=courtesy
+lemma please
+
+vocab 108 lang=en pos=phrase cefr=A2 cat=courtesy
+lemma excuse me
+
+vocab 109 lang=en pos=adv cefr=A1 cat=direction
+lemma straight
+
+vocab 110 lang=en pos=adv cefr=A1 cat=direction
+lemma left
+
+vocab 111 lang=en pos=adv cefr=A1 cat=direction
+lemma right
+
+vocab 112 lang=en pos=noun cefr=A2 cat=transport
+lemma platform
+
+vocab 113 lang=en pos=noun cefr=A1 cat=transport
+lemma train
+
+vocab 201 lang=en pos=noun cefr=A1 cat=food
+lemma food
+
+vocab 202 lang=en pos=noun cefr=A1 cat=food
+lemma apple
+
+vocab 203 lang=en pos=noun cefr=A1 cat=transport
+lemma ticket
+
+vocab 204 lang=en pos=noun cefr=A2 cat=reading
+lemma book
+
+vocab 205 lang=en pos=noun cefr=A2 cat=security
+lemma key

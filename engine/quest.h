@@ -97,6 +97,9 @@ struct QuestDef {
     QuestObjective objectives[QUEST_MAX_OBJECTIVES]{};
     uint8_t reward_count{0};
     QuestReward rewards[QUEST_MAX_REWARDS]{};
+    // Opaque scenario topic id (transportation/directions/...) linking the
+    // quest to language content. 0 = none. The language phase resolves it.
+    uint16_t topic{0};
 };
 
 struct QuestBank {

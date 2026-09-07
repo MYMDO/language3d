@@ -87,7 +87,8 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 10 — Player state | entity ref + progression + runtime/persistent split | ✅ done, shipped **v0.44.0** |
 | Phase 11 — Quests (A) | defs/state/objectives/conditions, no rewards yet | ✅ done, shipped **v0.45.0** |
 | Phase 11B — Quest integration | atomic rewards + dialogue wiring + playable quest | ✅ done, shipped **v0.46.0** |
-| Phase 12 — Language system | vocabulary/grammar/mastery/adaptive | next |
+| Phase 12 — Language system | vocab/exposure/progress, assessment later | ✅ done, shipped **v0.47.0** |
+| Phase 13 — Save / Progression | persistent versioned state | next |
 | Phase 12 — Language system | vocabulary/grammar/mastery/adaptive | next |
 | Phase 13 — Save / Progression | persistent versioned state | planned |
 | Phase 14 — Vertical slice | playable educational scenario | planned |

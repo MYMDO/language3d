@@ -8,6 +8,7 @@
 #   quest <u16 id>
 #   title <1..128 chars>
 #   description <1..256 chars>
+#   topic <u16, 0 = none>                       # scenario topic id
 #   prereq <questId> <ACTIVE|COMPLETED|CLAIMED>      # up to 2, may omit
 #   reward <XP:n|ITEM:i:c|FLAG:b|COUNTER:i:n>        # up to 4, may omit
 #   objective <TALK|REACH|COLLECT|GIVE|USE|INSPECT>
@@ -23,4 +24,6 @@
 #   if_item=<id>:<count> = player holds | if_flag=<0..31>
 #   if_counter=<idx>:<threshold> | if_level=<n>
 # Tags reference the shared content namespaces (NPC tags, Region3 tags,
-# item ids). `#` starts a comment; blank lines ignored.
+# item ids). Topic ids link quests to language content (1=transportation,
+# 2=directions, 3=shopping); the language phase resolves them.
+# `#` starts a comment; blank lines ignored.

@@ -106,6 +106,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/player.cpp
     engine/quest.cpp
     engine/dialogue_quest.cpp
+    engine/language.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -160,6 +161,7 @@ else()
     engine/player.cpp
     engine/quest.cpp
     engine/dialogue_quest.cpp
+    engine/language.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -228,6 +230,22 @@ else()
     VERBATIM
   )
   add_custom_target(language3d_quests DEPENDS ${GENERATED_QUEST_SRC})
+
+  # Build-time vocabulary content (content/vocabulary/*.vocab -> C++ tables).
+  file(GLOB LANGUAGE3D_VOCAB_SRC CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/content/vocabulary/*.vocab)
+  set(GENERATED_VOCAB_SRC ${CMAKE_CURRENT_BINARY_DIR}/generated_vocab.cpp)
+  add_custom_command(
+    OUTPUT ${GENERATED_VOCAB_SRC}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_vocab.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/content/vocabulary
+            ${GENERATED_VOCAB_SRC}
+    DEPENDS
+        ${LANGUAGE3D_VOCAB_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_vocab.py
+    VERBATIM
+  )
+  add_custom_target(language3d_vocab DEPENDS ${GENERATED_VOCAB_SRC})
 
   add_library(language3d_core STATIC ${LANGUAGE3D_ENGINE_SOURCES})
   target_include_directories(language3d_core PUBLIC
@@ -349,6 +367,14 @@ else()
       ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC})
     add_dependencies(playable_quest_test
       language3d_dialogues language3d_quests language3d_items)
+    language3d_add_test(language_test language_test.cpp ${GENERATED_VOCAB_SRC})
+    add_dependencies(language_test language3d_vocab)
+    language3d_add_test(language_scenario_test language_scenario_test.cpp
+      ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC}
+      ${GENERATED_VOCAB_SRC})
+    add_dependencies(language_scenario_test
+      language3d_dialogues language3d_quests language3d_items
+      language3d_vocab)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
     target_include_directories(platform_test PRIVATE
