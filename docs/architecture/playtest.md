@@ -20,7 +20,7 @@ telemetry, runtime scripting, or heap: all storage is fixed-capacity.
 - **Modes** (`playtest_cli.cpp`): `language3d --playtest` opens the
   console Test Center; `--headless-playtest [--scenario ID | --all]
   [--seed N] [--record FILE]` runs without SDL; `--replay FILE`
-  re-executes a recording and compares hashes. Normal launch is
+  re-executes the recorded scenario and compares fingerprints. Normal launch is
   untouched (unknown args boot the game).
 - **Scenarios** (`scenarios.cpp`): 8 deterministic gameplay checks —
   `basic-movement`, `npc-interaction`, `dialogue-evaluation`,
@@ -40,11 +40,16 @@ telemetry, runtime scripting, or heap: all storage is fixed-capacity.
 - **Event log**: 256-entry fixed ring of `{type, a, b, c}` (~20 gameplay
   event types). Engines stay log-free; the runner/scenarios log around
   real calls. FNV-1a hash over logical order; every scenario runs twice
-  and must hash identically (determinism proof).
-- **Replay** (v1, honest scope): `.l3dr` = versioned text
+  and must hash identically (determinism check). The hash is a
+  deterministic regression fingerprint, not a proof of absolute identity —
+  sufficient for catching behavioral drift, not a cryptographic guarantee.
+- **Deterministic scenario replay v1** (formerly "replay": renamed to
+  avoid implying input-sequence recording). `.l3dr` = versioned text
   (`scenario` + `seed` + expected hash). Record = dump after a verified
-  run; playback = re-execute + compare. This reproduces deterministic
-  input scenarios for bug reports; full op-step recording is future work.
+  run; playback = re-execute the same deterministic scenario and compare
+  hashes. This is scenario reproduction for bug reports and regression, not
+  a recording of raw input events — full input replay stays a separate
+  future milestone.
 - **Bug-report bundle** (`playtest-report/`): `report.txt` (version,
   platform, scenario, seed, result, failure, hash), `events.log`,
   `scenario.txt`, `state.txt`, `replay.l3dr`. Written on headless
