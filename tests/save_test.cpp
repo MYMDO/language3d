@@ -217,7 +217,7 @@ int main() {
         char tiny[16]{};
         SaveResult r = SaveResult::OK;
         L3D_REQUIRE(write_save(tiny, sizeof(tiny), w, &r) == 0);
-        L3D_REQUIRE(r == SaveResult::OVERFLOW);
+        L3D_REQUIRE(r == SaveResult::NO_SPACE);
     }
 
     L3D_REQUIRE(save_selfcheck());

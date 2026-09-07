@@ -53,7 +53,7 @@ enum class SaveResult : uint8_t {
     NEEDS_MIGRATION,  // well-formed header, supported < version
     MALFORMED,        // grammar/range violation
     TRUNCATED,        // ended before END (torn write included)
-    OVERFLOW,         // staging buffer too small
+    NO_SPACE,        // staging buffer too small
     UNKNOWN_ID        // content id not present in the current banks
 };
 
@@ -371,10 +371,10 @@ struct SaveApplySink {
             return SaveResult::MALFORMED;
         }
         if (inv_slots >= inv_max) return SaveResult::MALFORMED; // over count
-        if (inv_null) return SaveResult::OVERFLOW; // nowhere to store
+        if (inv_null) return SaveResult::NO_SPACE; // nowhere to store
         size_t idx = 0;
         while (idx < INV && pl.inventory->slots[idx].count != 0) ++idx;
-        if (idx >= INV) return SaveResult::OVERFLOW; // bigger world than here
+        if (idx >= INV) return SaveResult::NO_SPACE; // bigger world than here
         pl.inventory->slots[idx].id = id;
         pl.inventory->slots[idx].count = count;
         pl.inventory->used++;
@@ -395,7 +395,7 @@ struct SaveApplySink {
         if (quest_seen >= quest_max) return SaveResult::MALFORMED;
         if (quests.find(def)) return SaveResult::MALFORMED; // duplicate
         QuestRuntime* r = quests.track(def);
-        if (!r) return SaveResult::OVERFLOW;
+        if (!r) return SaveResult::NO_SPACE;
         r->state = state;
         r->objective_idx = obj;
         r->progress = prog;
@@ -437,7 +437,7 @@ struct SaveApplySink {
                 return SaveResult::OK;
             }
         }
-        return SaveResult::OVERFLOW;
+        return SaveResult::NO_SPACE;
     }
     SaveResult done() { return SaveResult::OK; }
 };
@@ -496,7 +496,7 @@ size_t save_write(char* out, size_t cap, const SaveInput<INV, QN, LN>& in,
         if (why) *why = r;
         return 0;
     };
-    if (!out || cap == 0) return fail(SaveResult::OVERFLOW);
+    if (!out || cap == 0) return fail(SaveResult::NO_SPACE);
     if (!in.clock || !in.player || !in.quests || !in.language)
         return fail(SaveResult::MALFORMED);
     SaveEmitter e{out, cap};
@@ -602,7 +602,7 @@ size_t save_write(char* out, size_t cap, const SaveInput<INV, QN, LN>& in,
     }
     e.str("END");
     e.eol();
-    if (!e.ok) return fail(SaveResult::OVERFLOW);
+    if (!e.ok) return fail(SaveResult::NO_SPACE);
     if (why) *why = SaveResult::OK;
     return e.n;
 }

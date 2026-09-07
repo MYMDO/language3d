@@ -36,7 +36,7 @@ documented, not a supported path).
 `NEEDS_MIGRATION` (the single hook future migrations attach to — none
 pre-built), garbage → `BAD_VERSION`. Rejection taxonomy: `MALFORMED`
 (grammar/range), `TRUNCATED` (EOF mid-grammar, cursor-precise),
-`OVERFLOW` (staging/capacity too small), `UNKNOWN_ID` (content drift).
+`NO_SPACE` (staging/capacity too small), `UNKNOWN_ID` (content drift).
 
 ## What persists (and what never does)
 
