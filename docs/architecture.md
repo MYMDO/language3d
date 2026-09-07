@@ -80,12 +80,14 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 3 — Entity system | Entity/Transform/Collider pools | ✅ done, shipped **v0.37.0** |
 | Phase 4 — NPC | NPC foundation (no dialogue/schedules yet) | ✅ done, shipped **v0.38.0** |
 | Phase 5 — NPC schedule | location-ID timetables + game clock | ✅ done, shipped **v0.39.0** |
-| Phase 6 — Dialogue | data-driven dialogue trees | next |
-| Phase 7 — Items / Inventory | pickup/use/give/trade | planned |
-| Phase 8 — Quests | objectives, triggers, rewards | planned |
-| Phase 9 — Language system | vocabulary/grammar/mastery/adaptive | planned |
-| Phase 10 — Save / Progression | persistent versioned state | planned |
-| Phase 11 — Vertical slice | playable educational scenario | planned |
+| Phase 6 — Schedule-driven movement (6A) | NPCs walk their schedules | ✅ done, shipped **v0.40.0** |
+| Phase 7 — NPC interaction (6B) | approach/interact, pre-dialogue behavior | next |
+| Phase 8 — Dialogue | data-driven dialogue trees | planned |
+| Phase 9 — Items / Inventory | pickup/use/give/trade | planned |
+| Phase 10 — Quests | objectives, triggers, rewards | planned |
+| Phase 11 — Language system | vocabulary/grammar/mastery/adaptive | planned |
+| Phase 12 — Save / Progression | persistent versioned state | planned |
+| Phase 13 — Vertical slice | playable educational scenario | planned |
 
 Note: phase numbers are logical, not chronological — Phase 2 (world)
 landed as v0.35.0 *before* Phase 1 (platform) as v0.36.0. That is
