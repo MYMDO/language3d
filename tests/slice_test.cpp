@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
-
 using namespace l3d;
 
 static Transform3 tr_at(int x, int y, uint16_t yaw = 0) {
@@ -130,6 +129,7 @@ int main() {
     L3D_REQUIRE(sc.saveGame("l3d_slice_test.save"));
     L3D_REQUIRE(sc.loadGame("l3d_slice_test.save"));
     L3D_REQUIRE(sc.annaDialogue() == 3);
+    std::remove("l3d_slice_test.save"); // do not litter the working tree
 
     // --- panel rendering draws real pixels into a live framebuffer ---
     {
