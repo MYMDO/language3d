@@ -18,11 +18,57 @@ from pathlib import Path
 SPEAKERS = {"npc": 0, "player": 1, "narrator": 2}
 LANGS = {"und": 0, "en": 1, "de": 2, "pl": 3, "es": 4, "fr": 5}
 CEFRS = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+CONDS = {"NONE": 0, "HAS_ITEM": 1, "FLAG_SET": 2, "COUNTER_GE": 3, "LEVEL_GE": 4}
+EFFECTS = {"NONE": 0, "GIVE_ITEM": 1, "SET_FLAG": 2, "ADD_COUNTER": 3,
+           "ADD_XP": 4, "START_QUEST": 5}
 MAX_NODES, MAX_CHOICES, MAX_TAGS, MAX_TEXT = 16, 4, 4, 192
 
 
 class Fail(Exception):
     pass
+
+
+def parse_tagged(raw, kinds, what, where, need):
+    """Parse KIND[:P1[:P2]] into (kind, p1, p2) with arity checks."""
+    parts = raw.split(":")
+    if parts[0] not in kinds:
+        raise Fail("%s: bad %s kind %r" % (where, what, parts[0]))
+    nums = []
+    for x in parts[1:]:
+        if not re.fullmatch(r"\d+", x):
+            raise Fail("%s: bad %s params %r" % (where, what, raw))
+        nums.append(int(x))
+    if len(nums) != need.get(parts[0], 0):
+        raise Fail("%s: bad %s arity %r" % (where, what, raw))
+    while len(nums) < 2:
+        nums.append(0)
+    return kinds[parts[0]], nums[0], nums[1]
+
+
+COND_ARITY = {"NONE": 0, "HAS_ITEM": 2, "FLAG_SET": 1, "COUNTER_GE": 2,
+              "LEVEL_GE": 1}
+EFFECT_ARITY = {"NONE": 0, "GIVE_ITEM": 2, "SET_FLAG": 1, "ADD_COUNTER": 2,
+                "ADD_XP": 1, "START_QUEST": 1}
+
+
+def check_cond(kind, p1, p2, where):
+    if kind == CONDS["HAS_ITEM"] and (p1 == 0 or p2 == 0):
+        raise Fail(where + ": HAS_ITEM needs item:count")
+    if kind == CONDS["FLAG_SET"] and p1 > 31:
+        raise Fail(where + ": FLAG_SET bit out of range")
+    if kind == CONDS["COUNTER_GE"] and p1 > 7:
+        raise Fail(where + ": COUNTER_GE index out of range")
+
+
+def check_effect(kind, p1, p2, where):
+    if kind == EFFECTS["GIVE_ITEM"] and (p1 == 0 or p2 == 0):
+        raise Fail(where + ": GIVE_ITEM needs item:count")
+    if kind == EFFECTS["SET_FLAG"] and p1 > 31:
+        raise Fail(where + ": SET_FLAG bit out of range")
+    if kind == EFFECTS["ADD_COUNTER"] and p1 > 7:
+        raise Fail(where + ": ADD_COUNTER index out of range")
+    if kind == EFFECTS["START_QUEST"] and p1 == 0:
+        raise Fail(where + ": START_QUEST needs quest id")
 
 
 def esc(text):
@@ -83,7 +129,7 @@ def parse_dlg(path):
             m = re.fullmatch(
                 r"node (\d+) speaker=(\w+) lang=(\w+) cefr=(\w+)"
                 r"(?: vocab=([\d,]+))?(?: grammar=([\d,]+))?"
-                r"(?: cond=(\d+))?(?: effect=(\d+))?", line)
+                r"(?: cond=([A-Za-z_:0-9]+))?(?: effect=([A-Za-z_:0-9]+))?", line)
             if not m:
                 raise Fail(where + ": bad node line")
             nid = int(m.group(1))
@@ -95,15 +141,18 @@ def parse_dlg(path):
                 raise Fail(where + ": bad lang %r" % m.group(3))
             if m.group(4) not in CEFRS:
                 raise Fail(where + ": bad cefr %r" % m.group(4))
-            cond = int(m.group(7) or 0)
-            effect = int(m.group(8) or 0)
-            if cond > 255 or effect > 255:
-                raise Fail(where + ": cond/effect out of range")
+            ck, cp1, cp2 = parse_tagged(m.group(7) or "NONE", CONDS,
+                                        "cond", where, COND_ARITY)
+            check_cond(ck, cp1, cp2, where)
+            ek, ep1, ep2 = parse_tagged(m.group(8) or "NONE", EFFECTS,
+                                        "effect", where, EFFECT_ARITY)
+            check_effect(ek, ep1, ep2, where)
             cur_n = {"id": nid, "speaker": SPEAKERS[m.group(2)],
                      "lang": LANGS[m.group(3)], "cefr": CEFRS[m.group(4)],
                      "vocab": u16list(m.group(5), "vocab", where),
                      "grammar": u16list(m.group(6), "grammar", where),
-                     "cond": cond, "effect": effect, "choices": []}
+                     "cond": (ck, cp1, cp2), "effect": (ek, ep1, ep2),
+                     "choices": []}
         elif line.startswith("text "):
             if cur_n is None or cur_text is not None:
                 raise Fail(where + ": stray text line")
@@ -175,11 +224,12 @@ def emit(dialogues, out_path):
             while len(g) < MAX_TAGS:
                 g.append("0")
             parts.append(
-                "    {%d, %d, %d, {%s}, t_%d_%d, {%d, %d, {%s}, %d, {%s}, %d}, %d, %d},"
+                "    {%d, %d, %d, {%s}, t_%d_%d, {%d, %d, {%s}, %d, {%s}, %d}, {%d, %d, %d}, {%d, %d, %d}},"
                 % (n["id"], n["speaker"], len(n["choices"]), ", ".join(ch),
                    d["id"], n["id"], n["lang"], n["cefr"], ", ".join(v),
                    len(n["vocab"]), ", ".join(g), len(n["grammar"]),
-                   n["cond"], n["effect"]))
+                   n["cond"][0], n["cond"][1], n["cond"][2],
+                   n["effect"][0], n["effect"][1], n["effect"][2]))
         parts.append("};")
     parts.append("static const DialogueDef defs[] = {")
     for d in dialogues:

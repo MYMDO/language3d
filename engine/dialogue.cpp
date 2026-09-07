@@ -2,6 +2,7 @@
 // deterministic self-check. Content tables are generated (never handwritten
 // here). Unreferenced, dialogue_selfcheck() is dropped by --gc-sections.
 #include "dialogue.h"
+#include "player.h" // PLAYER_COUNTERS for validator range checks only
 
 namespace l3d {
 
@@ -27,6 +28,27 @@ bool dialogue_validate(const DialogueDef& def, uint16_t* bad_node) {
         if (n.lang.cefr > uint8_t(DialogueCEFR::C2)) return fail(n.id);
         if (n.lang.vocab_count > DIALOGUE_MAX_TAGS) return fail(n.id);
         if (n.lang.grammar_count > DIALOGUE_MAX_TAGS) return fail(n.id);
+        if (n.cond.kind >= uint8_t(DialogueCondKind::COUNT)) return fail(n.id);
+        if (n.effect.kind >= uint8_t(DialogueEffectKind::COUNT)) return fail(n.id);
+        if (n.cond.kind == uint8_t(DialogueCondKind::HAS_ITEM) &&
+            (n.cond.p1 == 0 || n.cond.p2 == 0))
+            return fail(n.id);
+        if (n.cond.kind == uint8_t(DialogueCondKind::FLAG_SET) && n.cond.p1 >= 32)
+            return fail(n.id);
+        if (n.cond.kind == uint8_t(DialogueCondKind::COUNTER_GE) &&
+            n.cond.p1 >= PLAYER_COUNTERS)
+            return fail(n.id);
+        if (n.effect.kind == uint8_t(DialogueEffectKind::GIVE_ITEM) &&
+            (n.effect.p1 == 0 || n.effect.p2 == 0))
+            return fail(n.id);
+        if (n.effect.kind == uint8_t(DialogueEffectKind::SET_FLAG) && n.effect.p1 >= 32)
+            return fail(n.id);
+        if (n.effect.kind == uint8_t(DialogueEffectKind::ADD_COUNTER) &&
+            n.effect.p1 >= PLAYER_COUNTERS)
+            return fail(n.id);
+        if (n.effect.kind == uint8_t(DialogueEffectKind::START_QUEST) &&
+            (n.effect.p1 == 0 || n.effect.p1 == DIALOGUE_NONE))
+            return fail(n.id);
         for (size_t c = 0; c < n.choice_count; ++c) {
             const DialogueChoice& ch = n.choices[c];
             if (!ch.text || !ch.text[0]) return fail(n.id);
@@ -132,9 +154,9 @@ bool dialogue_selfcheck() {
     static const char t2[] = "Thank you!";
     static const DialogueNode nodes[] = {
         {1, uint8_t(DialogueSpeaker::NPC), 2,
-         {{c1, 2}, {c2, DIALOGUE_NONE}}, t1, DialogueLangMeta{}, 0, 0},
+         {{c1, 2}, {c2, DIALOGUE_NONE}}, t1, DialogueLangMeta{}, {}, {}},
         {2, uint8_t(DialogueSpeaker::NPC), 0,
-         {}, t2, DialogueLangMeta{}, 0, 0},
+         {}, t2, DialogueLangMeta{}, {}, {}},
     };
     static const DialogueDef def{7, 1, 2, nodes};
     static const DialogueBank bank{&def, 1};

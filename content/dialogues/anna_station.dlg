@@ -17,8 +17,8 @@ node 1 speaker=npc lang=en cefr=A2 vocab=101,102 grammar=13
 text Excuse me, can you help me?
 choice "Yes, of course." -> 2
 choice "Sorry, I don't understand." -> 3
-node 2 speaker=npc lang=en cefr=A2 vocab=103 grammar=12
-text Where is the station?
+node 2 speaker=npc lang=en cefr=A2 vocab=103 grammar=12 effect=START_QUEST:1
+text Where is the station? Please help me get there.
 choice "Go straight and turn left." -> 4
 choice "I don't know." -> 5
 node 3 speaker=npc lang=en cefr=A1 vocab=106

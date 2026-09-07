@@ -9,6 +9,7 @@
 #   title <1..128 chars>
 #   description <1..256 chars>
 #   prereq <questId> <ACTIVE|COMPLETED|CLAIMED>      # up to 2, may omit
+#   reward <XP:n|ITEM:i:c|FLAG:b|COUNTER:i:n>        # up to 4, may omit
 #   objective <TALK|REACH|COLLECT|GIVE|USE|INSPECT>
 #             [tag=N] [item=N] [count=N] [npc=N]
 #             [if_item=I:C] [if_flag=B] [if_counter=I:T] [if_level=L]

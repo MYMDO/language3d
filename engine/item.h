@@ -145,6 +145,14 @@ struct Inventory {
         used = 0;
     }
 
+    // Dry-run for transactional callers (quest rewards): would the whole
+    // amount fit without mutating anything? Implemented on a local copy;
+    // Inventory is trivially copyable and small (<= ~520 B).
+    bool can_fit(const ItemBank& bank, uint16_t id, uint16_t count) const {
+        Inventory probe = *this;
+        return probe.add(bank, id, count) == 0;
+    }
+
     // Total carried weight in abstract units (saturates at 32 bits).
     uint32_t weight(const ItemBank& bank) const {
         uint32_t total = 0;

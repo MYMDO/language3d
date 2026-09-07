@@ -23,7 +23,6 @@ Format: `content/dialogues/README.md`. Caps: 16 nodes/def, 4 choices/node,
 192 text chars, 4 vocab + 4 grammar tags/node.
 
 ## Session separation (explicit requirement)
-
 ```text
 InteractSession:  active / ended            (proximity + E edge)
 DialogueSession:  active / completed / aborted   (talk itself)
@@ -37,8 +36,11 @@ bad indices and non-ACTIVE sessions reject input deterministically.
 
 ## Language metadata (inert extension point)
 
-Every node carries `{lang, cefr, vocab[4], grammar[4]}` plus reserved
-`cond`/`effect` bytes (quest phase). Validated for range, never evaluated:
+Every node carries `{lang, cefr, vocab[4], grammar[4]}` plus structured
+`cond`/`effect` records. Language metadata stays inert (validated, never
+scored — the language phase). Since v0.46.0, `cond`/`effect` are evaluated
+and applied by the orchestration layer (`engine/dialogue_quest.h`), never
+by the dialogue engine itself; see quest-integration.md.
 the language phase will score/branch on these fields without reshaping
 this subsystem. Language-agnostic by construction (`und/en/de/pl/es/fr`
 today; Ukrainian→X by adding rows, never gameplay branches).

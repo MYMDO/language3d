@@ -17,7 +17,8 @@ from pathlib import Path
 
 OBJECTIVES = {"TALK", "REACH", "COLLECT", "GIVE", "USE", "INSPECT"}
 STATES = {"ACTIVE": 1, "COMPLETED": 2, "CLAIMED": 3}
-MAX_OBJECTIVES, MAX_PREREQS = 8, 2
+REWARDS = {"XP": 0, "ITEM": 1, "FLAG": 2, "COUNTER": 3}
+MAX_OBJECTIVES, MAX_PREREQS, MAX_REWARDS = 8, 2, 4
 MAX_TITLE, MAX_DESC = 128, 256
 
 
@@ -80,7 +81,7 @@ def parse_quest_file(path):
             if not m or not (1 <= int(m.group(1)) <= 65534):
                 raise Fail(where + ": bad quest id")
             cur = {"id": int(m.group(1)), "title": None, "desc": None,
-                   "prereqs": [], "objectives": []}
+                   "prereqs": [], "rewards": [], "objectives": []}
         elif cur is None:
             raise Fail(where + ": directive outside quest")
         elif head == "title":
@@ -98,6 +99,28 @@ def parse_quest_file(path):
             if len(cur["prereqs"]) >= MAX_PREREQS:
                 raise Fail(where + ": too many prereqs")
             cur["prereqs"].append({"q": int(m.group(1)), "s": STATES[m.group(2)]})
+        elif head == "reward":
+            m = re.fullmatch(r"(XP|ITEM|FLAG|COUNTER):(\d+)(?::(\d+))?",
+                             rest.strip())
+            if not m:
+                raise Fail(where + ": bad reward")
+            if len(cur["rewards"]) >= MAX_REWARDS:
+                raise Fail(where + ": too many rewards")
+            kind, a, b = m.group(1), int(m.group(2)), m.group(3)
+            b = int(b) if b is not None else 0
+            if kind == "XP":
+                rw = {"k": 1, "p1": a, "p2": 0}
+            elif kind == "ITEM":
+                if b == 0:
+                    raise Fail(where + ": ITEM reward needs count")
+                rw = {"k": 2, "p1": a, "p2": b}
+            elif kind == "FLAG":
+                if a > 31:
+                    raise Fail(where + ": FLAG bit out of range")
+                rw = {"k": 3, "p1": a, "p2": 0}
+            else:  # COUNTER
+                rw = {"k": 4, "p1": a, "p2": b}
+            cur["rewards"].append(rw)
         elif head == "objective":
             parts = rest.strip().split()
             if not parts or parts[0] not in OBJECTIVES:
@@ -177,6 +200,9 @@ def emit(quests, out_path):
         pre = ["{%d, %d}" % (p["q"], p["s"]) for p in q["prereqs"]]
         while len(pre) < MAX_PREREQS:
             pre.append("{65535, 2}")
+        rws = ["{%d, %d, %d}" % (r["k"], r["p1"], r["p2"]) for r in q["rewards"]]
+        while len(rws) < MAX_REWARDS:
+            rws.append("{0, 0, 0}")
         obs = []
         for o in q["objectives"]:
             obs.append("{%d, %d, %d, %d, %d, %s}" % (
@@ -184,9 +210,10 @@ def emit(quests, out_path):
                 cond_emit(o["cond"])))
         while len(obs) < MAX_OBJECTIVES:
             obs.append("{0, 0, 0, 1, 0, {0, 0, 0, 0, 0, 0, 0}}")
-        parts.append("    {%d, title_%d, desc_%d, %d, {%s}, %d, {%s}}," % (
+        parts.append("    {%d, title_%d, desc_%d, %d, {%s}, %d, {%s}, %d, {%s}}," % (
             q["id"], q["id"], q["id"], len(q["prereqs"]), ", ".join(pre),
-            len(q["objectives"]), ", ".join(obs)))
+            len(q["objectives"]), ", ".join(obs),
+            len(q["rewards"]), ", ".join(rws)))
     parts.append("};")
     parts.append("")
     parts.append("} // namespace")

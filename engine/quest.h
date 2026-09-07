@@ -20,6 +20,7 @@ namespace l3d {
 constexpr uint16_t QUEST_NONE = 0xFFFFu;
 constexpr size_t QUEST_MAX_OBJECTIVES = 8;
 constexpr size_t QUEST_MAX_PREREQS = 2;
+constexpr size_t QUEST_MAX_REWARDS = 4;
 constexpr size_t QUEST_MAX_TITLE = 128;
 constexpr size_t QUEST_MAX_DESC = 256;
 
@@ -69,6 +70,23 @@ struct QuestPrereq {
     uint8_t state{uint8_t(QuestState::COMPLETED)}; // minimum required state
 };
 
+// Reward kinds. Language mastery is deliberately absent: rewards stay in
+// game-state space (XP/items/flags/counters); learning state is separate.
+enum class RewardType : uint8_t {
+    NONE = 0,
+    XP,     // p1 = amount (<= 65535 per reward)
+    ITEM,   // p1 = item id, p2 = count
+    FLAG,   // p1 = bit
+    COUNTER, // p1 = index, p2 = amount
+    COUNT
+};
+
+struct QuestReward {
+    uint8_t kind{uint8_t(RewardType::NONE)};
+    uint16_t p1{0};
+    uint16_t p2{0};
+};
+
 struct QuestDef {
     uint16_t id{0};
     const char* title{nullptr};
@@ -77,6 +95,8 @@ struct QuestDef {
     QuestPrereq prereqs[QUEST_MAX_PREREQS]{};
     uint8_t objective_count{0};
     QuestObjective objectives[QUEST_MAX_OBJECTIVES]{};
+    uint8_t reward_count{0};
+    QuestReward rewards[QUEST_MAX_REWARDS]{};
 };
 
 struct QuestBank {
@@ -134,7 +154,8 @@ enum class QuestEvent : uint8_t {
     PROGRESS,    // COLLECT quota advanced, objective still open
     OBJECTIVE_DONE,
     QUEST_COMPLETED,
-    CLAIMED,         // COMPLETED -> CLAIMED acknowledged (no payload yet)
+    CLAIMED,         // COMPLETED -> CLAIMED, all rewards committed
+    CLAIM_BLOCKED,   // COMPLETED but a reward cannot be validated: nothing applied
     CONDITION_UNMET, // match found but its condition failed
     PREREQ_UNMET,
     ALREADY, // start an ACTIVE quest / claim a CLAIMED one
@@ -239,13 +260,48 @@ QuestEvent quest_report(QuestLog<N>& log, const QuestBank& bank,
     return QuestEvent::OBJECTIVE_DONE;
 }
 
-// COMPLETED -> CLAIMED (rewards arrive in Phase 11B; the transition is real).
-template <size_t N>
-QuestEvent quest_claim(QuestLog<N>& log, uint16_t def) {
-    QuestRuntime* r = log.find(def);
-    if (!r) return QuestEvent::INVALID;
+// COMPLETED -> CLAIMED with ATOMIC reward transaction: every reward is
+// validated first (item space via dry-run, flag/counter ranges); if any
+// check fails the quest stays COMPLETED and NOTHING is applied — never a
+// half-committed "+XP but no item" state. Returns CLAIMED or CLAIM_BLOCKED.
+template <size_t N, size_t INV>
+QuestEvent quest_claim(QuestLog<N>& log, const QuestBank& bank,
+                       const ItemBank& items, PlayerState<INV>& p,
+                       uint16_t def) {
+    const QuestDef* d = quest_find(bank, def);
+    QuestRuntime* r = d ? log.find(def) : nullptr;
+    if (!d || !r) return QuestEvent::INVALID;
     if (r->state == uint8_t(QuestState::CLAIMED)) return QuestEvent::ALREADY;
     if (r->state != uint8_t(QuestState::COMPLETED)) return QuestEvent::INVALID;
+    // Validate everything before mutating anything.
+    for (size_t i = 0; i < d->reward_count; ++i) {
+        const QuestReward& rw = d->rewards[i];
+        if (rw.kind == uint8_t(RewardType::ITEM)) {
+            if (!p.inventory || !p.inventory->can_fit(items, rw.p1, rw.p2))
+                return QuestEvent::CLAIM_BLOCKED;
+        } else if (rw.kind == uint8_t(RewardType::FLAG)) {
+            if (rw.p1 >= PLAYER_FLAGS) return QuestEvent::CLAIM_BLOCKED;
+        } else if (rw.kind == uint8_t(RewardType::COUNTER)) {
+            if (rw.p1 >= PLAYER_COUNTERS) return QuestEvent::CLAIM_BLOCKED;
+        } else if (rw.kind != uint8_t(RewardType::XP) &&
+                   rw.kind != uint8_t(RewardType::NONE)) {
+            return QuestEvent::CLAIM_BLOCKED;
+        }
+    }
+    // Commit: every effect is infallible from here (re-checked space).
+    for (size_t i = 0; i < d->reward_count; ++i) {
+        const QuestReward& rw = d->rewards[i];
+        if (rw.kind == uint8_t(RewardType::XP)) {
+            p.add_xp(rw.p1);
+        } else if (rw.kind == uint8_t(RewardType::ITEM)) {
+            const uint16_t left = p.inventory->add(items, rw.p1, rw.p2);
+            (void)left; // validated above; kept for toolchain honesty
+        } else if (rw.kind == uint8_t(RewardType::FLAG)) {
+            p.set_flag(size_t(rw.p1));
+        } else if (rw.kind == uint8_t(RewardType::COUNTER)) {
+            p.add_counter(size_t(rw.p1), rw.p2);
+        }
+    }
     r->state = uint8_t(QuestState::CLAIMED);
     return QuestEvent::CLAIMED;
 }

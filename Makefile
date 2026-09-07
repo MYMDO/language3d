@@ -12,7 +12,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test validate-content
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -114,10 +114,18 @@ quest-test: $(GENERATED_QUEST_SRC)
 	$(CXX) $(CXXFLAGS) -Iengine engine/quest.cpp engine/player.cpp engine/item.cpp $(GENERATED_QUEST_SRC) tests/quest_test.cpp -o /tmp/l3d_quest_test
 	/tmp/l3d_quest_test
 
+dialogue-quest-test:
+	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue_quest.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp tests/dialogue_quest_test.cpp -o /tmp/l3d_dialogue_quest_test
+	/tmp/l3d_dialogue_quest_test
+
+playable-quest-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/math.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) tests/playable_quest_test.cpp -o /tmp/l3d_playable_quest_test
+	/tmp/l3d_playable_quest_test
+
 validate-content:
 	python3 tools/build_dialogue.py --check content/dialogues
 	python3 tools/build_items.py --check content/items
 	python3 tools/build_quests.py --check content/quests
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test
 	@echo "CORE HOST TESTS PASSED"

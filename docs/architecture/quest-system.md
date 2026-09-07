@@ -1,8 +1,8 @@
 # Quest foundation (Roadmap Phase 11A, v0.45.0)
 
-Status: implemented. Definitions, state machine, objectives, conditions,
-completion and claim transition. No rewards and no dialogue integration —
-those arrive in Phase 11B with the first playable quest.
+Status: foundation (11A) + integration (11B) implemented. Definitions,
+state machine, objectives, conditions, atomic rewards, dialogue wiring,
+one playable quest. No shops, no language scoring yet.
 
 ## No god object (explicit principle)
 
@@ -53,7 +53,7 @@ pipeline as dialogue/items). First quest: Getting to the Station
 **60436 → 60436 (+0 B)**; quest tables linked into host tests only.
 Tests: 28 → 29.
 
-## Next (Phase 11B — Quest integration)
+## Next (Phase 12 — Language system)
 
-Rewards, dialogue `cond`/`effect` wiring (`has_item` gates, `give_item` /
-`set_flag` effects), and the first playable quest end-to-end.
+Vocabulary/grammar/mastery/adaptive dialogue on the metadata already
+riding every node and item (see quest-integration.md for the wired loop).

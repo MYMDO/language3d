@@ -52,6 +52,20 @@ bool quest_validate(const QuestDef& def) {
             (o.item == 0 || o.item == ITEM_NONE || o.count == 0))
             return false;
     }
+    if (def.reward_count > QUEST_MAX_REWARDS) return false;
+    for (size_t i = 0; i < def.reward_count; ++i) {
+        const QuestReward& r = def.rewards[i];
+        if (r.kind == uint8_t(RewardType::NONE) ||
+            r.kind >= uint8_t(RewardType::COUNT))
+            return false;
+        if (r.kind == uint8_t(RewardType::ITEM) &&
+            (r.p1 == 0 || r.p1 == ITEM_NONE || r.p2 == 0))
+            return false;
+        if (r.kind == uint8_t(RewardType::FLAG) && r.p1 >= PLAYER_FLAGS)
+            return false;
+        if (r.kind == uint8_t(RewardType::COUNTER) && r.p1 >= PLAYER_COUNTERS)
+            return false;
+    }
     return true;
 }
 
@@ -80,6 +94,7 @@ bool quest_selfcheck() {
     };
     static const QuestDef full{3, title, desc, 0, {}, 2, {objs[0], objs[1]}};
     static const QuestBank bank{&full, 1};
+    static const ItemBank no_items{nullptr, 0};
     if (!quest_validate_bank(bank, nullptr)) return false;
     if (quest_find(bank, 4) != nullptr) return false;
 
@@ -106,9 +121,9 @@ bool quest_selfcheck() {
     if (quest_report(log, bank, p, 3, uint8_t(ObjectiveType::COLLECT), 0, 7, 1) !=
         QuestEvent::QUEST_COMPLETED)
         return false;
-    if (quest_claim(log, 3) != QuestEvent::CLAIMED) return false;
-    if (quest_claim(log, 3) != QuestEvent::ALREADY) return false;
-    if (quest_claim(log, 4) != QuestEvent::INVALID) return false;
+    if (quest_claim(log, bank, no_items, p, 3) != QuestEvent::CLAIMED) return false;
+    if (quest_claim(log, bank, no_items, p, 3) != QuestEvent::ALREADY) return false;
+    if (quest_claim(log, bank, no_items, p, 4) != QuestEvent::INVALID) return false;
     return true;
 }
 

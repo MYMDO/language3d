@@ -1,0 +1,13 @@
+# Clerk at the station — ticket handoff (Roadmap Phase 11B).
+# NPC tag 2 = station clerk. The ticket arrives via a dialogue effect;
+# the quest layer observes possession through its COLLECT objective.
+
+dialogue 2 npc=2
+node 1 speaker=npc lang=en cefr=A1 vocab=203
+text Hello! Are you looking for a ticket?
+choice "Yes, please." -> 2
+choice "Just looking." -> 3
+node 2 speaker=npc lang=en cefr=A1 vocab=203,105 effect=GIVE_ITEM:2:1
+text Here is your ticket. Good luck!
+node 3 speaker=npc lang=en cefr=A1 vocab=106
+text Come back anytime!

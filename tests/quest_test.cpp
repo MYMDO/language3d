@@ -71,10 +71,11 @@ int main() {
     L3D_REQUIRE(report(log, bank, p, uint8_t(OT::GIVE), 2, 2, 1) == QuestEvent::IGNORED);
     L3D_REQUIRE(inv.add(items, 2, 1) == 0);
     L3D_REQUIRE(report(log, bank, p, uint8_t(OT::GIVE), 2, 2, 1) == QuestEvent::QUEST_COMPLETED);
-    // --- claim lifecycle ---
-    L3D_REQUIRE(quest_claim(log, 1) == QuestEvent::CLAIMED);
-    L3D_REQUIRE(quest_claim(log, 1) == QuestEvent::ALREADY);
-    L3D_REQUIRE(quest_claim(log, 9) == QuestEvent::INVALID);
+    // --- claim commits rewards atomically: +100 XP, flag 5 ---
+    L3D_REQUIRE(quest_claim(log, bank, items, p, 1) == QuestEvent::CLAIMED);
+    L3D_REQUIRE(p.xp == 100 && p.level == 1 && p.has_flag(5));
+    L3D_REQUIRE(quest_claim(log, bank, items, p, 1) == QuestEvent::ALREADY);
+    L3D_REQUIRE(quest_claim(log, bank, items, p, 9) == QuestEvent::INVALID);
 
     // --- conditions: flag-gated objective ---
     {
@@ -132,10 +133,46 @@ int main() {
                     QuestEvent::OBJECTIVE_DONE);
         L3D_REQUIRE(quest_report(log3, bank3, p3, 1, uint8_t(OT::GIVE), 2, 2, 1) ==
                     QuestEvent::QUEST_COMPLETED);
-        L3D_REQUIRE(quest_claim(log3, 1) == QuestEvent::CLAIMED);
+        L3D_REQUIRE(quest_claim(log3, bank3, items, p3, 1) == QuestEvent::CLAIMED);
         L3D_REQUIRE(quest_start(log3, bank3, 3) == QuestEvent::STARTED);
         L3D_REQUIRE(quest_report(log3, bank3, p3, 3, uint8_t(OT::INSPECT), 9, 0, 0) ==
                     QuestEvent::QUEST_COMPLETED);
+    }
+
+    // --- CLAIM_BLOCKED: full inventory, nothing applied atomically ---
+    {
+        static const char t[] = "Heavy reward";
+        static const char d[] = "A ticket that does not fit.";
+        static const QuestObjective objs[] = {
+            {uint8_t(OT::TALK), 1, 0, 1, 0, {}},
+        };
+        static const QuestReward rws[] = {
+            {uint8_t(RewardType::XP), 50, 0},
+            {uint8_t(RewardType::ITEM), 2, 1},
+        };
+        static const QuestDef heavy{8, t, d, 0, {}, 1, {objs[0]}, 2,
+                                    {rws[0], rws[1]}};
+        static const QuestBank bank5{&heavy, 1};
+        L3D_REQUIRE(quest_validate_bank(bank5, nullptr));
+        QuestLog<4> log5{};
+        log5.init();
+        PlayerState<4> p5{};
+        p5.init(0x0500);
+        Inventory<4> inv5{};
+        inv5.init();
+        p5.bind_inventory(&inv5);
+        for (int i = 0; i < 4; ++i) L3D_REQUIRE(inv5.add(items, 2, 1) == 0);
+        L3D_REQUIRE(quest_start(log5, bank5, 8) == QuestEvent::STARTED);
+        L3D_REQUIRE(quest_report(log5, bank5, p5, 8, uint8_t(OT::TALK), 1, 0, 0) ==
+                    QuestEvent::QUEST_COMPLETED);
+        L3D_REQUIRE(quest_claim(log5, bank5, items, p5, 8) == QuestEvent::CLAIM_BLOCKED);
+        // Atomicity: quest still COMPLETED, no XP, nothing added.
+        L3D_REQUIRE(log5.find(8)->state == uint8_t(QuestState::COMPLETED));
+        L3D_REQUIRE(p5.xp == 0 && inv5.count_of(2) == 4);
+        // Free one slot: the same claim now commits everything.
+        L3D_REQUIRE(inv5.remove(2, 1) == 1);
+        L3D_REQUIRE(quest_claim(log5, bank5, items, p5, 8) == QuestEvent::CLAIMED);
+        L3D_REQUIRE(p5.xp == 50 && inv5.count_of(2) == 4);
     }
 
     // --- COLLECT quota accumulates via PROGRESS ---

@@ -53,6 +53,42 @@ enum class DialogueSpeaker : uint8_t { NPC = 0, PLAYER, NARRATOR, COUNT };
 
 enum class DialogueState : uint8_t { EMPTY = 0, ACTIVE, COMPLETED, ABORTED };
 
+// Condition kinds mirror QuestCondition layouts (p1/p2 meanings match),
+// so the language/quest phases share one mental model.
+enum class DialogueCondKind : uint8_t {
+    NONE = 0,
+    HAS_ITEM,  // p1 = item id, p2 = count
+    FLAG_SET,  // p1 = bit
+    COUNTER_GE, // p1 = index, p2 = threshold
+    LEVEL_GE,  // p1 = level
+    COUNT
+};
+
+// Effect kinds mirror QuestReward layouts. Applied by the orchestration
+// layer (engine/dialogue_quest.h), never by the dialogue engine itself:
+// the dialogue unit stays unaware of quests/inventory by construction.
+enum class DialogueEffectKind : uint8_t {
+    NONE = 0,
+    GIVE_ITEM,  // p1 = item id, p2 = count (returns leftover)
+    SET_FLAG,   // p1 = bit
+    ADD_COUNTER, // p1 = index, p2 = amount
+    ADD_XP,     // p1 = amount
+    START_QUEST, // p1 = quest id
+    COUNT
+};
+
+struct DialogueCond {
+    uint8_t kind{uint8_t(DialogueCondKind::NONE)};
+    uint16_t p1{0};
+    uint16_t p2{0};
+};
+
+struct DialogueEffect {
+    uint8_t kind{uint8_t(DialogueEffectKind::NONE)};
+    uint16_t p1{0};
+    uint16_t p2{0};
+};
+
 // Inert on this phase: carried, validated for range, never evaluated.
 struct DialogueLangMeta {
     uint8_t lang{uint8_t(DialogueLang::UNDEFINED)};
@@ -75,8 +111,8 @@ struct DialogueNode {
     DialogueChoice choices[DIALOGUE_MAX_CHOICES]{};
     const char* text{nullptr};
     DialogueLangMeta lang{};
-    uint8_t cond{0};   // reserved: condition id (future quest/state gating)
-    uint8_t effect{0}; // reserved: effect id (future rewards/triggers)
+    DialogueCond cond{};     // entry requirement (orchestration evaluates)
+    DialogueEffect effect{}; // applied on entry (orchestration applies)
 };
 
 struct DialogueDef {

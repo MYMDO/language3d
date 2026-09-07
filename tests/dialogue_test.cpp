@@ -15,11 +15,17 @@ const DialogueBank content_dialogues(); // generated_dialogue.cpp
 int main() {
     // --- generated bank validates and matches the authored scenario ---
     const DialogueBank bank = content_dialogues();
-    L3D_REQUIRE(bank.count == 1);
+    L3D_REQUIRE(bank.count == 2); // Anna station + clerk ticket
     uint16_t bad = 0;
     L3D_REQUIRE(dialogue_validate_bank(bank, &bad));
     const DialogueDef* anna = dialogue_find(bank, 1);
     L3D_REQUIRE(anna && anna->npc_tag == 1 && anna->node_count == 5);
+    const DialogueDef* clerk = dialogue_find(bank, 2);
+    L3D_REQUIRE(clerk && clerk->npc_tag == 2 && clerk->node_count == 3);
+    const DialogueNode* k2 = dialogue_find_node(*clerk, 2);
+    L3D_REQUIRE(k2 && k2->choice_count == 0); // terminal handoff
+    L3D_REQUIRE(k2->effect.kind == uint8_t(DialogueEffectKind::GIVE_ITEM));
+    L3D_REQUIRE(k2->effect.p1 == 2 && k2->effect.p2 == 1);
     const DialogueNode* n1 = dialogue_find_node(*anna, 1);
     L3D_REQUIRE(n1 && n1->choice_count == 2);
     L3D_REQUIRE(std::strcmp(n1->text, "Excuse me, can you help me?") == 0);
@@ -84,14 +90,14 @@ int main() {
         static const char t[] = "Hi";
         static const char c[] = "Go";
         static const DialogueNode dangling[] = {
-            {1, 0, 1, {{c, 99}}, t, DialogueLangMeta{}, 0, 0},
+            {1, 0, 1, {{c, 99}}, t, DialogueLangMeta{}, {}, {}},
         };
         static const DialogueDef bad_def{9, 1, 1, dangling};
         uint16_t bad_node = 0;
         L3D_REQUIRE(!dialogue_validate(bad_def, &bad_node) && bad_node == 1);
         static const DialogueNode dup[] = {
-            {1, 0, 0, {}, t, DialogueLangMeta{}, 0, 0},
-            {1, 0, 0, {}, t, DialogueLangMeta{}, 0, 0},
+            {1, 0, 0, {}, t, DialogueLangMeta{}, {}, {}},
+            {1, 0, 0, {}, t, DialogueLangMeta{}, {}, {}},
         };
         static const DialogueDef dup_def{10, 1, 2, dup};
         L3D_REQUIRE(!dialogue_validate(dup_def, nullptr));
