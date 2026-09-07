@@ -15,7 +15,7 @@ const DialogueBank content_dialogues(); // generated_dialogue.cpp
 int main() {
     // --- generated bank validates and matches the authored scenario ---
     const DialogueBank bank = content_dialogues();
-    L3D_REQUIRE(bank.count == 3); // Anna station + clerk ticket + Anna familiar
+    L3D_REQUIRE(bank.count == 5); // Anna station + clerk ticket + Anna familiar + shopkeeper x2
     uint16_t bad = 0;
     L3D_REQUIRE(dialogue_validate_bank(bank, &bad));
     const DialogueDef* anna = dialogue_find(bank, 1);

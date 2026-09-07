@@ -29,7 +29,7 @@ static QuestEvent report(QuestLog<8>& log, const QuestBank& bank,
 
 int main() {
     const QuestBank bank = content_quests();
-    L3D_REQUIRE(bank.count == 1);
+    L3D_REQUIRE(bank.count == 2);
     uint16_t bad = 0;
     L3D_REQUIRE(quest_validate_bank(bank, &bad));
     const QuestDef* station = quest_find(bank, 1);

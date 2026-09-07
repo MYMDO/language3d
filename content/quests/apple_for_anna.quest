@@ -1,0 +1,13 @@
+# An Apple for Anna (Roadmap Phase 17).
+# Tags share content namespaces: npc 3=shopkeeper, npc 1=Anna,
+# item 1=apple. No prereq: standalone, playable without finishing quest 1.
+
+quest 2
+title An Apple for Anna
+description Ask the shopkeeper for an apple, then bring it to Anna.
+topic 3
+reward XP:50
+reward FLAG:6
+objective TALK tag=3
+objective COLLECT item=1 count=1
+objective GIVE item=1 count=1 npc=1

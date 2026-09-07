@@ -399,6 +399,16 @@ else()
     add_dependencies(slice_test
       language3d_dialogues language3d_quests language3d_items
       language3d_vocab)
+    language3d_add_test(shop_slice_test shop_slice_test.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdl2/scenario.cpp
+      ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC}
+      ${GENERATED_VOCAB_SRC})
+    target_include_directories(shop_slice_test PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdl2
+    )
+    add_dependencies(shop_slice_test
+      language3d_dialogues language3d_quests language3d_items
+      language3d_vocab)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
     target_include_directories(platform_test PRIVATE

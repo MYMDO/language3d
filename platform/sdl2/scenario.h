@@ -1,21 +1,22 @@
 #pragma once
-// Phase 14 vertical slice orchestration (desktop-only, no SDL includes:
-// fully unit-testable). Owns the slice runtime — entities, NPCs, schedule,
+// Playable-scenario orchestration (desktop-only, no SDL includes:
+// fully unit-testable). One generic runtime driven by a ScenarioDef;
+// per-scenario differences (NPC roster, quest, regions, save file) are
+// data, never branches. Owns the slice runtime — entities, NPCs, schedule,
 // quest log, player state, inventory, language profile, clock, sessions —
 // and exposes per-frame hooks for the game loop plus a save file.
 //
 // Slice contract (documented simplifications for playability):
-// - Anna is anchored at the Game NPC cell; her schedule/dispatch machinery
-//   runs (living state), the clerk is static. Positions come from scenario
-//   transforms; the loop mirrors them into Game sprites (no Game changes).
+// - NPCs with schedules dispatch on them (solid-aware); static NPCs stand.
+//   Positions come from scenario transforms; the loop mirrors them into
+//   Game sprites (no Game changes).
 // - E near an NPC opens dialogue (consumed: the Game never sees it);
-//   E near the clerk while holding the ticket for GIVE reports directly.
+//   E near a GIVE recipient while holding the item reports directly.
 // - REACH/COLLECT objectives auto-report from position/inventory each tick;
 //   TALK completes through the dialogue fan-out (talk twice, as designed).
 // - Completed quests auto-claim (rewards + message).
-// - Anna greets with dialogue 3 once station mastery reaches FAMILIAR,
-//   else dialogue 1. Save persists progress; reload flips the greeting:
-//   the closed learning loop, playable.
+// - Variant groups pick harder dialogue once mastery qualifies. Save
+//   persists progress; reload keeps it: the closed learning loop.
 #include "../../engine/npc_dispatch.h"
 #include "../../engine/interact.h"
 #include "../../engine/dialogue_quest.h"
@@ -28,32 +29,56 @@
 
 namespace l3d {
 
+// One NPC bound by content tag. Schedules are optional: schedCount == 0
+// means a static NPC (valid, exercised by the clerk).
+struct ScenarioNPCDef {
+    uint16_t tag{0};          // content NPC tag (TALK/GIVE matching, prompts)
+    const char* name{nullptr}; // display name (prompts, speaker labels)
+    uint16_t dialogue{0};     // fallback dialogue id
+    uint16_t variantGroup{0}; // 0 = no variants
+    uint8_t archetype{uint8_t(NPCArchetype::UNKNOWN)};
+    int16_t cellX{0};
+    int16_t cellY{0}; // spawn cell (centered at runtime)
+    ScheduleEntry sched[2]{};
+    uint8_t schedCount{0};
+};
+
+// Region box in map cells (built into Region3 at init).
+struct ScenarioRegionDef {
+    int16_t x0{0};
+    int16_t y0{0};
+    int16_t x1{0};
+    int16_t y1{0};
+    uint16_t tag{0};
+};
+
+struct ScenarioDef {
+    const char* id{nullptr};   // "station" (CLI + save filename)
+    const char* saveFile{nullptr};
+    uint16_t quest{0}; // quest id (0 = none)
+    ScenarioNPCDef npcs[4]{};
+    uint8_t npcCount{0};
+    ScenarioRegionDef regions[4]{};
+    uint8_t regionCount{0};
+};
+
 // Generated content banks (implemented by the build-generated tables).
 const DialogueBank content_dialogues();
 const QuestBank content_quests();
 const ItemBank content_items();
 const VocabularyBank content_vocabulary();
 
-// Slice layout (map cells, all verified open in assets/map.txt):
-//   Anna anchor / MARKET plaza (18,18), HOME nook (16..17,17..18),
-//   clerk booth (19,17), station district (16..20,16..20) tag 3.
-constexpr uint16_t SLICE_ANNA_TAG = 1;
-constexpr uint16_t SLICE_CLERK_TAG = 2;
-constexpr uint16_t SLICE_STATION_TAG = 3;
-constexpr uint16_t SLICE_MARKET_TAG = 10;
-constexpr uint16_t SLICE_HOME_TAG = 11;
-constexpr uint16_t SLICE_ANNA_DIALOGUE = 1;
-constexpr uint16_t SLICE_ANNA_VARIANT_GROUP = 1;
-constexpr uint16_t SLICE_CLERK_DIALOGUE = 2;
-constexpr uint16_t SLICE_QUEST = 1;
-constexpr uint16_t SLICE_TICKET = 2;
-constexpr uint32_t SLICE_SAVE_VERSION_GUARD = 1;
+// Built-in scenario definitions (defined in scenario.cpp).
+const ScenarioDef* findScenarioDef(const char* id);
+size_t scenarioDefCount();
+const ScenarioDef* scenarioDefAt(size_t i);
 
 class Scenario {
   public:
     bool init(const DialogueBank* db, const QuestBank* qb,
-              const ItemBank* ib, const VocabularyBank* vb);
-    // Per-frame: clock, Anna dispatch (solid-blocked), quest pump, messages.
+              const ItemBank* ib, const VocabularyBank* vb,
+              const ScenarioDef* def);
+    // Per-frame: clock, NPC dispatch (solid-blocked), quest pump, messages.
     // solid(ctx,x,y): true = blocked cell (e.g. Game::solid).
     void tick(uint32_t dtMs, uint32_t nowMs, bool (*solid)(void*, int32_t, int32_t),
               void* ctx);
@@ -63,8 +88,12 @@ class Scenario {
         refreshTexts();
     }
     // Sprite anchors for the loop to mirror into Game sprites.
-    Vec2 annaPos() const;
-    Vec2 clerkPos() const;
+    size_t npcCount() const { return npcCount_; }
+    Vec2 npcPos(size_t i) const;
+    uint16_t npcIdByTag(uint16_t tag) const;
+    const char* saveFile() const {
+        return (def_ && def_->saveFile) ? def_->saveFile : "language3d.save";
+    }
 
     // E edge / answer keys. Return true when consumed (loop must hide the
     // key from the Game in that case).
@@ -78,26 +107,27 @@ class Scenario {
     const char* objectiveText() const;
     const char* promptText() const;
     const char* message() const;
-    uint16_t annaDialogue() const;
+    // Data-driven variant selection for an NPC tag (fallback when the tag
+    // has no variant group).
+    uint16_t dialogueFor(uint16_t tag) const;
 
     // Test access.
     const QuestLog<8>& quests() const { return log_; }
     const LanguageProfile<32>& language() const { return lang_; }
     const PlayerState<8>& player() const { return player_; }
     const NPCPool<8>& npcs() const { return npcs_; }
-    uint16_t annaId() const { return anna_; }
-    uint16_t clerkId() const { return clerk_; }
 
   private:
     const DialogueBank* dbank_{nullptr};
     const QuestBank* qbank_{nullptr};
     const ItemBank* ibank_{nullptr};
     const VocabularyBank* vbank_{nullptr};
+    const ScenarioDef* def_{nullptr};
     EntityPool<16> entities_{};
     TransformPool<16> transforms_{};
     NPCPool<8> npcs_{};
     SchedulePool<8> sched_{};
-    Region3 regions_[3]{};
+    Region3 regions_[4]{};
     QuestLog<8> log_{};
     PlayerState<8> player_{};
     Inventory<8> inv_{};
@@ -106,8 +136,8 @@ class Scenario {
     InteractSession isession_{};
     DialogueSession dsession_{};
     Transform3 playerTr_{};
-    uint16_t anna_{0xFFFFu};
-    uint16_t clerk_{0xFFFFu};
+    uint16_t npcIds_[4]{0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
+    uint8_t npcCount_{0};
     bool showFinal_{false};
     char message_[96]{};
     uint32_t messageUntil_{0};
@@ -118,7 +148,7 @@ class Scenario {
     void say(const char* text);
     void refreshTexts();
     void pumpQuests();
-    const NPCAgent* anna() const;
+    const ScenarioNPCDef* npcDefByTag(uint16_t tag) const;
+    const ScenarioNPCDef* npcDefByIndex(size_t i) const;
 };
-
 } // namespace l3d

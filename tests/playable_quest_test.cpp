@@ -36,7 +36,7 @@ int main() {
     const QuestBank qbank = content_quests();
     const ItemBank items = content_items();
     const VocabularyBank vbank = content_vocabulary();
-    L3D_REQUIRE(dbank.count == 3 && qbank.count == 1 && items.count == 4);
+    L3D_REQUIRE(dbank.count == 5 && qbank.count == 2 && items.count == 4);
     LanguageProfile<16> lang{};
     LanguagePair pair{uint8_t(DialogueLang::PL), uint8_t(DialogueLang::EN)};
     lang.init(pair);

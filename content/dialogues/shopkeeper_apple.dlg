@@ -1,0 +1,21 @@
+# Shopkeeper at the market — apple errand (Roadmap Phase 17).
+# NPC tag 3 = shopkeeper. Quest 2 starts from node 2 (START_QUEST:2);
+# the apple changes hands on node 4 (GIVE_ITEM:1:1). TALK completes on
+# the second greeting via the standard fan-out, exactly like quest 1.
+# Response intents: 7=request-goods (CORRECT), 2=smalltalk (PARTIAL),
+# 3=offtopic (INCORRECT, the shopkeeper asks again).
+
+dialogue 4 npc=3
+node 1 speaker=npc lang=en cefr=A1 vocab=201,107
+text Hello! Looking for something fresh today?
+choice "An apple, please." -> 2
+choice "Just looking." -> 3
+node 2 speaker=npc lang=en cefr=A1 vocab=202,107 effect=START_QUEST:2 expect=7:2
+text For Anna? Wonderful! Which one would you like?
+choice "An apple, please." -> 4 intent=7 vocab=202,107
+choice "Just looking." -> 3 intent=2
+choice "I like trains." -> 2 intent=3 vocab=113
+node 3 speaker=npc lang=en cefr=A1 vocab=106
+text Come back anytime!
+node 4 speaker=npc lang=en cefr=A1 vocab=202,105 effect=GIVE_ITEM:1:1
+text Here you go — one shiny apple!

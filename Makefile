@@ -13,7 +13,7 @@ SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp eng
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc playtest rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test font-test slice-test validate-content
+.PHONY: all clean run pc playtest rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test font-test slice-test shop-slice-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -150,11 +150,15 @@ slice-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SR
 	$(CXX) $(CXXFLAGS) -Iengine -Iplatform/sdl2 engine/language.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/math.cpp engine/save.cpp platform/sdl2/scenario.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC) tests/slice_test.cpp -o /tmp/l3d_slice_test
 	/tmp/l3d_slice_test
 
+shop-slice-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine -Iplatform/sdl2 engine/language.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/math.cpp engine/save.cpp platform/sdl2/scenario.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC) tests/shop_slice_test.cpp -o /tmp/l3d_shop_slice_test
+	/tmp/l3d_shop_slice_test
+
 validate-content:
 	python3 tools/build_dialogue.py --check content/dialogues
 	python3 tools/build_items.py --check content/items
 	python3 tools/build_quests.py --check content/quests
 	python3 tools/build_vocab.py --check content/vocabulary
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test font-test slice-test
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test player-test quest-test dialogue-quest-test playable-quest-test language-test language-scenario-test save-test font-test slice-test shop-slice-test
 	@echo "CORE HOST TESTS PASSED"

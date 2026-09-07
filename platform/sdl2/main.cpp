@@ -107,17 +107,30 @@ int main(int argc, char* argv[]){
               << " | bytes=" << game_assets.size << "\n";
     game.reset();
 
-    // Phase 14 vertical slice: scenario orchestration over the live game.
-    // The maze game runs unchanged; the slice reads player state, mirrors
+    // Scenario orchestration over the live game (definition-driven: the
+    // --scenario flag only selects data, the loop below is generic).
+    // The maze game runs unchanged; the scenario reads player state, mirrors
     // NPC sprites, consumes E/answers/F5/F9 when it handles them, and draws
     // its panel/HUD into the framebuffer before presentation.
+    const char* scenarioId = "station";
+    for (int i = 1; i + 1 < argc; ++i) {
+        size_t k = 0;
+        const char* want = "--scenario";
+        while (want[k] && want[k] == argv[i][k]) ++k;
+        if (want[k] == '\0' && argv[i][k] == '\0') scenarioId = argv[i + 1];
+    }
+    const ScenarioDef* scenarioDef = findScenarioDef(scenarioId);
+    if (!scenarioDef) {
+        std::fprintf(stderr, "unknown scenario '%s'; maze only\n", scenarioId);
+    }
     Scenario scenario{};
     const DialogueBank slice_dbank = content_dialogues();
     const QuestBank slice_qbank = content_quests();
     const ItemBank slice_ibank = content_items();
     const VocabularyBank slice_vbank = content_vocabulary();
-    bool sliceOn = scenario.init(&slice_dbank, &slice_qbank, &slice_ibank,
-                                 &slice_vbank);
+    bool sliceOn = scenarioDef &&
+                   scenario.init(&slice_dbank, &slice_qbank, &slice_ibank,
+                                 &slice_vbank, scenarioDef);
     if (!sliceOn) std::fprintf(stderr, "scenario init failed; maze only\n");
     auto slice_solid = [](void* ctx, int32_t x, int32_t y) {
         return static_cast<Game*>(ctx)->solid(x, y);
@@ -231,7 +244,7 @@ int main(int argc, char* argv[]){
         in.answer = latch.answer;
         in.mouse_x = mouse_look ? latch_mouse_x : 0;
 
-        // Vertical slice wiring (no Game changes: read state, own sprites,
+        // Scenario wiring (no Game changes: read state, own sprites,
         // consume handled keys, draw panel before presentation).
         if (sliceOn) {
             Transform3 slicePlayer{};
@@ -241,24 +254,23 @@ int main(int argc, char* argv[]){
             scenario.setPlayer(slicePlayer);
             scenario.tick(frame_ms, now, slice_solid, &game);
             game.sprites().clear();
-            SpriteEntity sprA{};
-            sprA.pos = scenario.annaPos();
-            sprA.texture = 1;
-            sprA.width_scale = 32;
-            sprA.height_scale = 64;
-            SpriteEntity sprC = sprA;
-            sprC.pos = scenario.clerkPos();
-            game.sprites().add(sprA);
-            game.sprites().add(sprC);
+            for (size_t si = 0; si < scenario.npcCount(); ++si) {
+                SpriteEntity spr{};
+                spr.pos = scenario.npcPos(si);
+                spr.texture = 1;
+                spr.width_scale = 32;
+                spr.height_scale = 64;
+                game.sprites().add(spr);
+            }
             if (latch.interact && scenario.pressE(now)) latch.interact = false;
             if (latch.answer && scenario.pressAnswer(latch.answer))
                 latch.answer = 0;
             if (latch.save) {
-                scenario.saveGame("language3d.save");
+                scenario.saveGame(scenario.saveFile());
                 latch.save = false;
             }
             if (latch.load) {
-                scenario.loadGame("language3d.save");
+                scenario.loadGame(scenario.saveFile());
                 latch.load = false;
             }
         }

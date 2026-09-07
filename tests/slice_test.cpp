@@ -37,19 +37,19 @@ int main() {
     const QuestBank qbank = content_quests();
     const ItemBank ibank = content_items();
     const VocabularyBank vbank = content_vocabulary();
-    L3D_REQUIRE(sc.init(&dbank, &qbank, &ibank, &vbank));
-    L3D_REQUIRE(!sc.init(nullptr, &qbank, &ibank, &vbank));
+    L3D_REQUIRE(sc.init(&dbank, &qbank, &ibank, &vbank, findScenarioDef("station")));
+    L3D_REQUIRE(!sc.init(nullptr, &qbank, &ibank, &vbank, findScenarioDef("station")));
     uint32_t now = 1000;
 
     // --- variant: default greeting before any mastery ---
-    L3D_REQUIRE(sc.annaDialogue() == 1);
+    L3D_REQUIRE(sc.dialogueFor(1) == 1);
     L3D_REQUIRE(std::strcmp(sc.objectiveText(),
                             "Explore: find Anna (walk to the NPC, press E)") == 0);
 
     // --- Anna lives: dispatched toward the MARKET center (18,18) ---
     for (int i = 0; i < 40; ++i) sc.tick(16, now += 16, open_solid, nullptr);
-    L3D_REQUIRE(sc.annaPos().x.raw == Fx::from_int(18).raw);
-    L3D_REQUIRE(sc.annaPos().y.raw == Fx::from_int(18).raw);
+    L3D_REQUIRE(sc.npcPos(0).x.raw == Fx::from_int(18).raw);
+    L3D_REQUIRE(sc.npcPos(0).y.raw == Fx::from_int(18).raw);
 
     // --- E with nobody near is not consumed ---
     sc.setPlayer(tr_at(4, 4));
@@ -113,7 +113,7 @@ int main() {
     qr = sc.quests().find(1);
     L3D_REQUIRE(qr->state == uint8_t(QuestState::CLAIMED)); // auto-claimed
     L3D_REQUIRE(sc.player().xp == 100);
-    L3D_REQUIRE(std::strcmp(sc.objectiveText(), "Station quest claimed. +100 XP") == 0);
+    L3D_REQUIRE(std::strcmp(sc.objectiveText(), "Getting to the Station claimed. +100 XP") == 0);
 
     // --- save / load round-trip through a real file ---
     L3D_REQUIRE(sc.saveGame("l3d_slice_test.save"));
@@ -128,12 +128,12 @@ int main() {
     play_anna(sc, now);
     play_anna(sc, now);
     // station: SEENx?, USED, CORRECT x3 total -> FAMILIAR
-    L3D_REQUIRE(sc.annaDialogue() == 3);
+    L3D_REQUIRE(sc.dialogueFor(1) == 3);
 
     // --- reload keeps the new greeting: persistence affects next play ---
     L3D_REQUIRE(sc.saveGame("l3d_slice_test.save"));
     L3D_REQUIRE(sc.loadGame("l3d_slice_test.save"));
-    L3D_REQUIRE(sc.annaDialogue() == 3);
+    L3D_REQUIRE(sc.dialogueFor(1) == 3);
     std::remove("l3d_slice_test.save"); // do not litter the working tree
 
     // --- panel rendering draws real pixels into a live framebuffer ---

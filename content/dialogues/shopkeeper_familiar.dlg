@@ -1,0 +1,19 @@
+# Shopkeeper, familiar variant (Roadmap Phase 17).
+# Selected when the player's apple mastery reaches FAMILIAR: same quest
+# wiring (START_QUEST:2 on node 2, GIVE_ITEM on node 4), warmer A2 lines.
+# Dialogue id 5, NPC tag 3 (shopkeeper), variant group 2 (familiar tier).
+dialogue 5 npc=3 variant=2 require=202:3
+
+node 1 speaker=npc lang=en cefr=A2 vocab=201,102 grammar=13
+text Hello again! How can I help you today?
+choice "An apple, please." -> 2
+choice "Just looking." -> 3
+node 2 speaker=npc lang=en cefr=A2 vocab=202 effect=START_QUEST:2 expect=7:2
+text For Anna, of course! Which apple catches your eye?
+choice "An apple, please." -> 4 intent=7 vocab=202,107
+choice "Just looking." -> 3 intent=2
+choice "I like trains." -> 2 intent=3 vocab=113
+node 3 speaker=npc lang=en cefr=A1 vocab=106
+text Come back anytime!
+node 4 speaker=npc lang=en cefr=A1 vocab=202,105 effect=GIVE_ITEM:1:1
+text Here you go — one shiny apple, as always!

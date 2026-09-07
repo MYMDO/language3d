@@ -25,20 +25,30 @@ Click the window to capture the mouse (`Esc` releases it).
 | `W`/`S`, `↑`/`↓` | move forward / back |
 | `A`/`D`, `Q`/`C` | strafe left / right |
 | `←`/`→`, mouse | turn |
-| `E` near Anna / clerk | talk (a prompt appears when someone is near) |
+| `E` near Anna / clerk / shopkeeper | talk (a prompt appears when someone is near) |
 | `1`–`3` | answer in dialogue |
-| `F5` / `F9` | save / load (`language3d.save` in the working directory) |
+| `F5` / `F9` | save / load (per-scenario file in the working directory) |
 | `F11` | fullscreen |
 
 ## What to play
 
-Start at the maze entrance, explore east to the plaza (around 18,18),
-talk to **Anna** ("Yes, of course."), talk to her again, walk to the
-**clerk**, take the **ticket** ("Yes, please." — try "I like trains."
-first to see a wrong answer held open), hand it over, then save with
-`F5`. Talk to Anna twice more: once she trusts your station directions,
-she greets you with harder lines. Save, quit, reload with `F9` — the
-harder greeting persists.
+Launch with `./language3d_mvp` (station scenario) or
+`./language3d_mvp --scenario shop`.
+
+**Scenario A — Getting to the Station.** Start at the maze entrance,
+explore east to the plaza (around 18,18), talk to **Anna** ("Yes, of
+course."), talk to her again, walk to the **clerk**, take the **ticket**
+("Yes, please." — try "I like trains." first to see a wrong answer held
+open), hand it over, then save with `F5`. Talk to Anna twice more: once
+she trusts your station directions, she greets you with harder lines.
+Save, quit, reload with `F9` — the harder greeting persists.
+
+**Scenario B — An Apple for Anna.** Same plaza. Talk to the
+**shopkeeper** at the market stall (around 17,19), ask for an apple,
+take it, carry it to **Anna**, hand it over, then save with `F5`
+(`language3d-shop.save`, separate from Scenario A). Talk to the
+shopkeeper twice more: once he trusts your apple errands, his greeting
+changes too. Save, quit, reload — the new greeting persists.
 
 ## Feedback levels (copy into your report)
 

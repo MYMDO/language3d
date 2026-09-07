@@ -538,7 +538,9 @@ static bool sc_vertical_slice(AssertCtx& ctx, EventLog& log, char* state,
     const QuestBank qbank = content_quests();
     const ItemBank ibank = content_items();
     const VocabularyBank vbank = content_vocabulary();
-    if (!assert_true(ctx, sc.init(&dbank, &qbank, &ibank, &vbank),
+    const ScenarioDef* def = findScenarioDef("station");
+    if (!assert_true(ctx, def != nullptr, "station def exists")) return false;
+    if (!assert_true(ctx, sc.init(&dbank, &qbank, &ibank, &vbank, def),
                      "slice scenario boots"))
         return false;
     log.log(EventType::GAME_START, 0, 0, 0);
@@ -548,7 +550,7 @@ static bool sc_vertical_slice(AssertCtx& ctx, EventLog& log, char* state,
     if (!assert_true(ctx, sc.pressE(now += 100), "E opens Anna dialogue"))
         return false;
     log.log(EventType::DIALOGUE_START, 1, 0, 0);
-    if (!assert_true(ctx, sc.annaDialogue() == 1, "default greeting first"))
+    if (!assert_true(ctx, sc.dialogueFor(1) == 1, "default greeting first"))
         return false;
     log.log(EventType::VARIANT_SELECTED, 1, 0, 0);
     if (!assert_true(ctx, sc.pressAnswer(1), "answer Yes")) return false;
@@ -619,6 +621,128 @@ static bool sc_vertical_slice(AssertCtx& ctx, EventLog& log, char* state,
     return true;
 }
 
+// ---- Scenario 9: shop slice (Scenario B: same runtime, new definition) ----
+static bool sc_shop_slice(AssertCtx& ctx, EventLog& log, char* state,
+                          size_t cap, uint32_t) {
+    Scenario sc{};
+    const DialogueBank dbank = content_dialogues();
+    const QuestBank qbank = content_quests();
+    const ItemBank ibank = content_items();
+    const VocabularyBank vbank = content_vocabulary();
+    const ScenarioDef* def = findScenarioDef("shop");
+    if (!assert_true(ctx, def != nullptr, "shop def exists")) return false;
+    if (!assert_true(ctx, sc.init(&dbank, &qbank, &ibank, &vbank, def),
+                     "shop scenario boots"))
+        return false;
+    log.log(EventType::GAME_START, 0, 0, 0);
+    uint32_t now = 1000;
+    // Approach the shopkeeper: prompt names him, E opens dialogue 4.
+    sc.setPlayer(tr_at(17, 18, 0x4000));
+    if (!assert_true(ctx,
+                     std::strcmp(sc.promptText(), "Shopkeeper nearby - press E") == 0,
+                     "shopkeeper prompt"))
+        return false;
+    if (!assert_true(ctx, sc.pressE(now += 100), "E opens shop dialogue"))
+        return false;
+    log.log(EventType::DIALOGUE_START, 4, 0, 0);
+    if (!assert_true(ctx, sc.dialogueFor(3) == 4, "fallback greeting first"))
+        return false;
+    log.log(EventType::VARIANT_SELECTED, 4, 0, 0);
+    // Talk through: Yes -> node 2 (quest START effect fires).
+    if (!assert_true(ctx, sc.pressAnswer(1), "answer request")) return false;
+    const QuestRuntime* qr = sc.quests().find(2);
+    if (!assert_true(ctx, qr && qr->state == uint8_t(QuestState::ACTIVE),
+                     "START_QUEST effect fired"))
+        return false;
+    log.log(EventType::QUEST_STATE_CHANGED, 2, uint8_t(QuestState::ACTIVE), 0);
+    if (!assert_true(ctx,
+                     std::strcmp(sc.objectiveText(), "Quest: talk to Shopkeeper (E)") == 0,
+                     "TALK objective text"))
+        return false;
+    // Wrong answer first: off-topic intent holds, no apple, still open.
+    if (!assert_true(ctx, sc.pressAnswer(3), "off-topic answered")) return false;
+    log.log(EventType::RESPONSE_EVALUATED, uint8_t(ResponseVerdict::INCORRECT), 0, 0);
+    if (!assert_true(ctx, sc.dialogueOpen(), "incorrect holds dialogue"))
+        return false;
+    if (!assert_true(ctx, !sc.player().inventory->has(1, 1), "no apple yet"))
+        return false;
+    // Right answer: terminal node 4 hands the apple over.
+    if (!assert_true(ctx, sc.pressAnswer(1), "correct answer")) return false;
+    log.log(EventType::RESPONSE_EVALUATED, uint8_t(ResponseVerdict::CORRECT), 0, 0);
+    if (!assert_true(ctx, sc.player().inventory->has(1, 1), "apple received"))
+        return false;
+    log.log(EventType::ITEM_ADDED, 1, 1, 0);
+    if (!assert_true(ctx, sc.pressE(now += 100), "dismiss farewell")) return false;
+    if (!assert_true(ctx, !sc.dialogueOpen(), "dialogue closed")) return false;
+    // Greet again: TALK fan-out completes objective 0.
+    if (!assert_true(ctx, sc.pressE(now += 600), "greet again")) return false;
+    qr = sc.quests().find(2);
+    if (!assert_true(ctx, qr && qr->objective_idx == 1, "TALK objective done"))
+        return false;
+    log.log(EventType::QUEST_OBJECTIVE_CHANGED, 2, 1, 0);
+    if (!assert_true(ctx, sc.pressE(now += 100), "E held during dialogue"))
+        return false;
+    // Walk away: dialogue aborts through the shared machinery.
+    sc.setPlayer(tr_at(4, 4));
+    sc.tick(16, now += 16, open_space, nullptr);
+    if (!assert_true(ctx, !sc.dialogueOpen(), "walk-away aborts")) return false;
+    // COLLECT auto-reports from the shared pump (apple already held).
+    sc.tick(16, now += 16, open_space, nullptr);
+    qr = sc.quests().find(2);
+    if (!assert_true(ctx, qr && qr->objective_idx == 2, "COLLECT reported"))
+        return false;
+    // Carry the apple to Anna: E reports GIVE directly, no dialogue.
+    sc.setPlayer(tr_at(17, 18));
+    if (!assert_true(ctx, sc.pressE(now += 600), "E hands apple over")) return false;
+    if (!assert_true(ctx, !sc.dialogueOpen(), "no dialogue on handoff")) return false;
+    qr = sc.quests().find(2);
+    if (!assert_true(ctx, qr && qr->state == uint8_t(QuestState::CLAIMED),
+                     "quest auto-claimed"))
+        return false;
+    log.log(EventType::QUEST_STATE_CHANGED, 2, uint8_t(QuestState::CLAIMED), 0);
+    if (!assert_true(ctx, sc.player().xp == 50, "reward +50 XP")) return false;
+    if (!assert_true(ctx, sc.player().has_flag(6), "reward flag 6")) return false;
+    if (!assert_true(ctx,
+                     std::strcmp(sc.objectiveText(), "An Apple for Anna claimed. +50 XP") == 0,
+                     "claim line"))
+        return false;
+    // Save / load round-trip through a real file.
+    if (!assert_true(ctx, sc.saveGame("playtest-shop.save"), "F5 saves"))
+        return false;
+    log.log(EventType::SAVE, 0, 0, 0);
+    if (!assert_true(ctx, sc.loadGame("playtest-shop.save"), "F9 loads"))
+        return false;
+    log.log(EventType::LOAD, 0, 0, 0);
+    qr = sc.quests().find(2);
+    if (!assert_true(ctx, qr && qr->state == uint8_t(QuestState::CLAIMED),
+                     "claim survives reload"))
+        return false;
+    if (!assert_true(ctx, sc.player().xp == 50, "xp survives reload"))
+        return false;
+    // Closed learning loop: two more shop talks -> FAMILIAR -> variant 5.
+    for (int r = 0; r < 2; ++r) {
+        sc.setPlayer(tr_at(17, 18, 0x4000));
+        if (!assert_true(ctx, sc.pressE(now += 600), "reopen shop")) return false;
+        if (!assert_true(ctx, sc.pressAnswer(1), "request again")) return false;
+        if (!assert_true(ctx, sc.pressAnswer(1), "thanks again")) return false;
+        if (!assert_true(ctx, sc.pressE(now += 600), "dismiss again")) return false;
+        if (!assert_true(ctx, !sc.dialogueOpen(), "closed again")) return false;
+    }
+    if (!assert_true(ctx, sc.dialogueFor(3) == 5, "familiar variant flips"))
+        return false;
+    log.log(EventType::VARIANT_SELECTED, 5, 0, 0);
+    // Reload keeps the new greeting: persistence affects next play.
+    if (!assert_true(ctx, sc.saveGame("playtest-shop.save"), "save again"))
+        return false;
+    if (!assert_true(ctx, sc.loadGame("playtest-shop.save"), "load again"))
+        return false;
+    if (!assert_true(ctx, sc.dialogueFor(3) == 5, "variant survives reload"))
+        return false;
+    std::remove("playtest-shop.save");
+    snap(ctx, state, cap, "shop=claimed,xp=50,variant=5,save-load-ok");
+    return true;
+}
+
 bool register_all_scenarios() {
     Registry& r = registry();
     bool ok = true;
@@ -647,6 +771,9 @@ bool register_all_scenarios() {
          ok;
     ok = register_scenario("vertical-slice", "Full Anna-to-claim playthrough",
                            sc_vertical_slice) &&
+         ok;
+    ok = register_scenario("shop-slice", "Apple errand end-to-end",
+                           sc_shop_slice) &&
          ok;
     return ok;
 }
