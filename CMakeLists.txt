@@ -101,6 +101,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/schedule.cpp
     engine/npc_dispatch.cpp
     engine/interact.cpp
+    engine/dialogue.cpp
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d_rp2040 language3d_assets)
@@ -150,6 +151,7 @@ else()
     engine/schedule.cpp
     engine/npc_dispatch.cpp
     engine/interact.cpp
+    engine/dialogue.cpp
   )
 
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -169,6 +171,23 @@ else()
     VERBATIM
   )
   add_custom_target(language3d_assets DEPENDS ${GENERATED_ASSET_SRC})
+
+  # Build-time dialogue content (content/dialogues/*.dlg -> C++ tables).
+  # Validation failures break the build on every platform by construction.
+  file(GLOB LANGUAGE3D_DIALOGUE_SRC CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/content/dialogues/*.dlg)
+  set(GENERATED_DIALOGUE_SRC ${CMAKE_CURRENT_BINARY_DIR}/generated_dialogue.cpp)
+  add_custom_command(
+    OUTPUT ${GENERATED_DIALOGUE_SRC}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_dialogue.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/content/dialogues
+            ${GENERATED_DIALOGUE_SRC}
+    DEPENDS
+        ${LANGUAGE3D_DIALOGUE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/build_dialogue.py
+    VERBATIM
+  )
+  add_custom_target(language3d_dialogues DEPENDS ${GENERATED_DIALOGUE_SRC})
 
   add_library(language3d_core STATIC ${LANGUAGE3D_ENGINE_SOURCES})
   target_include_directories(language3d_core PUBLIC
@@ -277,6 +296,8 @@ else()
     language3d_add_test(schedule_test schedule_test.cpp)
     language3d_add_test(npc_dispatch_test npc_dispatch_test.cpp)
     language3d_add_test(interact_test interact_test.cpp)
+    language3d_add_test(dialogue_test dialogue_test.cpp ${GENERATED_DIALOGUE_SRC})
+    add_dependencies(dialogue_test language3d_dialogues)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
     target_include_directories(platform_test PRIVATE

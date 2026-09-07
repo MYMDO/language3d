@@ -5,11 +5,12 @@ SDL_LIBS := $(shell pkg-config --libs sdl2 2>/dev/null)
 TARGET := language3d_mvp
 PC_CXXFLAGS := $(CXXFLAGS) -DL3D_PC_PROFILE
 GENERATED_ASSET_SRC := build/generated_assets.cpp
+GENERATED_DIALOGUE_SRC := build/generated_dialogue.cpp
 SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp engine/world3.cpp $(GENERATED_ASSET_SRC) platform/sdl2/main.cpp platform/sdl2/platform_sdl2.cpp
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -83,5 +84,16 @@ interact-test:
 	$(CXX) $(CXXFLAGS) -Iengine engine/interact.cpp engine/math.cpp tests/interact_test.cpp -o /tmp/l3d_interact_test
 	/tmp/l3d_interact_test
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test
+$(GENERATED_DIALOGUE_SRC): $(wildcard content/dialogues/*.dlg) tools/build_dialogue.py
+	mkdir -p build
+	python3 tools/build_dialogue.py content/dialogues $@
+
+dialogue-test: $(GENERATED_DIALOGUE_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue.cpp $(GENERATED_DIALOGUE_SRC) tests/dialogue_test.cpp -o /tmp/l3d_dialogue_test
+	/tmp/l3d_dialogue_test
+
+validate-content:
+	python3 tools/build_dialogue.py --check content/dialogues
+
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test
 	@echo "CORE HOST TESTS PASSED"

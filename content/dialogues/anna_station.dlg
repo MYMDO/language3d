@@ -1,0 +1,29 @@
+# Anna at the market — first English scenario (Roadmap Phase 8).
+#
+# Format (strict, see content/dialogues/README.md):
+#   dialogue <id> npc=<npcTag>
+#   node <nodeId> speaker=<npc|player|narrator> lang=<..> cefr=<A1..C2>
+#        [vocab=<t1,t2..>] [grammar=<g1,g2..>] [cond=N] [effect=N]
+#   text <single line, 1..192 chars>
+#   choice "<text>" -> <nodeId|END>
+# A node without choices is terminal.
+#
+# Vocabulary tags (opaque content ids, resolved by the language phase):
+#   101=greeting 102=help 103=station 104=direction 105=thanks 106=farewell
+# Grammar tags: 11=imperative 12=wh-question 13=modal-can
+
+dialogue 1 npc=1
+node 1 speaker=npc lang=en cefr=A2 vocab=101,102 grammar=13
+text Excuse me, can you help me?
+choice "Yes, of course." -> 2
+choice "Sorry, I don't understand." -> 3
+node 2 speaker=npc lang=en cefr=A2 vocab=103 grammar=12
+text Where is the station?
+choice "Go straight and turn left." -> 4
+choice "I don't know." -> 5
+node 3 speaker=npc lang=en cefr=A1 vocab=106
+text No problem. Have a nice day!
+node 4 speaker=npc lang=en cefr=A1 vocab=105
+text Thank you very much!
+node 5 speaker=npc lang=en cefr=A1 vocab=106
+text Maybe someone else can help. Goodbye!

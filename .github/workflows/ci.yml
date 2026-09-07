@@ -44,6 +44,14 @@ jobs:
           path: dist/*.tar.gz
           if-no-files-found: error
 
+  validate-content:
+    name: Content validation (.dlg)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate dialogue content
+        run: python3 tools/build_dialogue.py --check content/dialogues
+
   build-windows:
     name: Windows build + tests (native MSVC, no MSYS2)
     runs-on: windows-latest

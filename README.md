@@ -65,7 +65,7 @@ RP2040 buttons and ST7789 wiring: [`docs/platforms/rp2040.md`](docs/platforms/rp
 ## Tests
 
 ```bash
-./tools/test.sh          # full host suite via CTest (25 tests)
+./tools/test.sh          # full host suite via CTest (26 tests)
 make test-all            # legacy Make wrapper (core subset)
 ```
 

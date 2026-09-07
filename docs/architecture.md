@@ -82,7 +82,8 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 5 — NPC schedule | location-ID timetables + game clock | ✅ done, shipped **v0.39.0** |
 | Phase 6 — Schedule-driven movement (6A) | NPCs walk their schedules | ✅ done, shipped **v0.40.0** |
 | Phase 7 — NPC interaction (6B) | proximity/target/session, pre-dialogue | ✅ done, shipped **v0.41.0** |
-| Phase 8 — Dialogue | data-driven dialogue trees | next |
+| Phase 8 — Dialogue | data-driven trees + inert language metadata | ✅ done, shipped **v0.42.0** |
+| Phase 9 — Items / Inventory | pickup/use/give/trade | next |
 | Phase 9 — Items / Inventory | pickup/use/give/trade | planned |
 | Phase 10 — Quests | objectives, triggers, rewards | planned |
 | Phase 11 — Language system | vocabulary/grammar/mastery/adaptive | planned |
