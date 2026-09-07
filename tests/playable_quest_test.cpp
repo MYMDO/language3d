@@ -7,6 +7,7 @@
 #include "../engine/npc_dispatch.h"
 #include "../engine/interact.h"
 #include "../engine/dialogue_quest.h"
+#include "../engine/language.h"
 #include "../engine/entity.h"
 #include "test_common.h"
 #include <cstdio>
@@ -17,6 +18,7 @@ namespace l3d {
 const DialogueBank content_dialogues();
 const QuestBank content_quests();
 const ItemBank content_items();
+const VocabularyBank content_vocabulary();
 }
 
 static bool open_space(const Vec3&, const Vec3&) { return false; }
@@ -33,7 +35,11 @@ int main() {
     const DialogueBank dbank = content_dialogues();
     const QuestBank qbank = content_quests();
     const ItemBank items = content_items();
+    const VocabularyBank vbank = content_vocabulary();
     L3D_REQUIRE(dbank.count == 3 && qbank.count == 1 && items.count == 4);
+    LanguageProfile<16> lang{};
+    LanguagePair pair{uint8_t(DialogueLang::PL), uint8_t(DialogueLang::EN)};
+    lang.init(pair);
 
     const uint16_t e_player = entities.spawn(EntityKind::PLAYER);
     const uint16_t e_anna = entities.spawn(EntityKind::NPC);
@@ -84,7 +90,7 @@ int main() {
     // --- 2. talk: quest START effect fires on "Where is the station?" ---
     DialogueSession ds{};
     L3D_REQUIRE(dq_begin(ds, dbank, log, qbank, items, player, 1, anna, nullptr));
-    L3D_REQUIRE(dq_choose(ds, dbank, player, log, qbank, items, 0).advanced);
+    L3D_REQUIRE(dq_choose(ds, dbank, player, log, qbank, items, lang, vbank, 0).advanced);
     const QuestRuntime* qr = log.find(1);
     L3D_REQUIRE(qr && qr->state == uint8_t(QuestState::ACTIVE)); // TALK auto-reported? no:
     // (TALK objective completes when the dialogue opens on Anna: dq_begin
@@ -121,7 +127,7 @@ int main() {
     L3D_REQUIRE(interact_target(npcs, transforms, tp, reach) == clerk);
     L3D_REQUIRE(interact_try(is, clerk, 5000) == InteractResult::STARTED);
     L3D_REQUIRE(dq_begin(ds, dbank, log, qbank, items, player, 2, clerk, nullptr));
-    DialogueStep st = dq_choose(ds, dbank, player, log, qbank, items, 0);
+    DialogueStep st = dq_choose(ds, dbank, player, log, qbank, items, lang, vbank, 0);
     L3D_REQUIRE(st.advanced && st.effect.kind == uint8_t(EffectApply::APPLIED));
     L3D_REQUIRE(inv.has(2, 1)); // ticket in hand
     L3D_REQUIRE(interact_end(is, 6000) == InteractResult::ENDED);

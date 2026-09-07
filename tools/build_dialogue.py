@@ -129,7 +129,8 @@ def parse_dlg(path):
             m = re.fullmatch(
                 r"node (\d+) speaker=(\w+) lang=(\w+) cefr=(\w+)"
                 r"(?: vocab=([\d,]+))?(?: grammar=([\d,]+))?"
-                r"(?: cond=([A-Za-z_:0-9]+))?(?: effect=([A-Za-z_:0-9]+))?", line)
+                r"(?: cond=([A-Za-z_:0-9]+))?(?: effect=([A-Za-z_:0-9]+))?"
+                r"(?: expect=(\d+)(?::(\d+))?)?", line)
             if not m:
                 raise Fail(where + ": bad node line")
             nid = int(m.group(1))
@@ -147,11 +148,16 @@ def parse_dlg(path):
             ek, ep1, ep2 = parse_tagged(m.group(8) or "NONE", EFFECTS,
                                         "effect", where, EFFECT_ARITY)
             check_effect(ek, ep1, ep2, where)
+            exp_pri = int(m.group(9) or 0)
+            exp_sec = int(m.group(10) or 0)
+            if exp_pri > 65534 or exp_sec > 65534:
+                raise Fail(where + ": expect intent out of range")
             cur_n = {"id": nid, "speaker": SPEAKERS[m.group(2)],
                      "lang": LANGS[m.group(3)], "cefr": CEFRS[m.group(4)],
                      "vocab": u16list(m.group(5), "vocab", where),
                      "grammar": u16list(m.group(6), "grammar", where),
                      "cond": (ck, cp1, cp2), "effect": (ek, ep1, ep2),
+                     "expect": (exp_pri, exp_sec),
                      "choices": []}
         elif line.startswith("text "):
             if cur_n is None or cur_text is not None:
@@ -163,14 +169,23 @@ def parse_dlg(path):
         elif line.startswith("choice "):
             if cur_n is None or cur_text is None:
                 raise Fail(where + ": choice outside node text")
-            m = re.fullmatch(r'choice "([^"]+)" -> (\d+|END)', line)
+            m = re.fullmatch(
+                r'choice "([^"]+)" -> (\d+|END)'
+                r"(?: intent=(\d+))?(?: vocab=([\d,]+))?(?: grammar=([\d,]+))?",
+                line)
             if not m:
                 raise Fail(where + ": bad choice line")
             if len(cur_n["choices"]) >= MAX_CHOICES:
                 raise Fail(where + ": too many choices")
+            intent = int(m.group(3) or 0)
+            if intent > 65534:
+                raise Fail(where + ": intent out of range")
+            cv = u16list(m.group(4), "choice vocab", where)
+            cg = u16list(m.group(5), "choice grammar", where)
             nxt = m.group(2)
             cur_n["choices"].append(
-                {"text": m.group(1), "next": 65535 if nxt == "END" else int(nxt)})
+                {"text": m.group(1), "next": 65535 if nxt == "END" else int(nxt),
+                 "intent": intent, "vocab": cv, "grammar": cg})
         else:
             raise Fail(where + ": unknown directive")
     flush_node()
@@ -213,10 +228,16 @@ def emit(dialogues, out_path):
                              % (d["id"], n["id"], ci, esc(c["text"])))
         parts.append("static const DialogueNode nodes_%d[] = {" % d["id"])
         for n in d["nodes"]:
-            ch = ["{c_%d_%d_%d, %d}" % (d["id"], n["id"], ci, c["next"])
-                  for ci, c in enumerate(n["choices"])]
+            ch = []
+            for ci, c in enumerate(n["choices"]):
+                cv = ["%d" % x for x in c["vocab"]] + ["0"] * (MAX_TAGS - len(c["vocab"]))
+                cg = ["%d" % x for x in c["grammar"]] + ["0"] * (MAX_TAGS - len(c["grammar"]))
+                ch.append("{c_%d_%d_%d, %d, %d, {%s}, %d, {%s}, %d}" % (
+                    d["id"], n["id"], ci, c["next"], c["intent"],
+                    ", ".join(cv), len(c["vocab"]), ", ".join(cg),
+                    len(c["grammar"])))
             while len(ch) < MAX_CHOICES:
-                ch.append("{nullptr, 65535}")
+                ch.append("{nullptr, 65535, 0, {0, 0, 0, 0}, 0, {0, 0, 0, 0}, 0}")
             v = ["%d" % x for x in n["vocab"]]
             while len(v) < MAX_TAGS:
                 v.append("0")
@@ -224,12 +245,13 @@ def emit(dialogues, out_path):
             while len(g) < MAX_TAGS:
                 g.append("0")
             parts.append(
-                "    {%d, %d, %d, {%s}, t_%d_%d, {%d, %d, {%s}, %d, {%s}, %d}, {%d, %d, %d}, {%d, %d, %d}},"
+                "    {%d, %d, %d, {%s}, t_%d_%d, {%d, %d, {%s}, %d, {%s}, %d}, {%d, %d, %d}, {%d, %d, %d}, %d, %d},"
                 % (n["id"], n["speaker"], len(n["choices"]), ", ".join(ch),
                    d["id"], n["id"], n["lang"], n["cefr"], ", ".join(v),
                    len(n["vocab"]), ", ".join(g), len(n["grammar"]),
                    n["cond"][0], n["cond"][1], n["cond"][2],
-                   n["effect"][0], n["effect"][1], n["effect"][2]))
+                   n["effect"][0], n["effect"][1], n["effect"][2],
+                   n["expect"][0], n["expect"][1]))
         parts.append("};")
     parts.append("static const DialogueDef defs[] = {")
     for d in dialogues:

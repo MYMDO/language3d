@@ -20,7 +20,10 @@ dedicated `validate-content` CI job. A runtime validator
 (`dialogue_validate*`, same rules) guards hand-built/programmatic defs.
 
 Format: `content/dialogues/README.md`. Caps: 16 nodes/def, 4 choices/node,
-192 text chars, 4 vocab + 4 grammar tags/node.
+192 text chars, 4 vocab + 4 grammar tags/node. Since v0.50.0, choices also
+carry `intent` + vocab/grammar tags and nodes declare `expect` sets; see
+response-evaluation.md (purely additive fields — old tables compile
+unchanged).
 
 ## Session separation (explicit requirement)
 ```text

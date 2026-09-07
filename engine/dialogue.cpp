@@ -52,6 +52,8 @@ bool dialogue_validate(const DialogueDef& def, uint16_t* bad_node) {
         for (size_t c = 0; c < n.choice_count; ++c) {
             const DialogueChoice& ch = n.choices[c];
             if (!ch.text || !ch.text[0]) return fail(n.id);
+            if (ch.vocab_count > DIALOGUE_MAX_TAGS) return fail(n.id);
+            if (ch.grammar_count > DIALOGUE_MAX_TAGS) return fail(n.id);
             if (ch.next == DIALOGUE_NONE) continue; // terminal choice
             bool found = false;
             for (size_t k = 0; k < def.node_count; ++k) {

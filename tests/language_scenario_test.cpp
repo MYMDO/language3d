@@ -61,7 +61,7 @@ int main() {
     L3D_REQUIRE(lang_observe_dialogue(prof, vbank, *n1) == 2); // 101, 102
     L3D_REQUIRE(prof.progress_of(101)->exposures == 1);
     // Player asks ("Yes"): entering node 2 exposes station vocab + STARTs quest.
-    DialogueStep st = dq_choose(s, dbank, player, log, qbank, items, 0);
+    DialogueStep st = dq_choose(s, dbank, player, log, qbank, items, prof, vbank, 0);
     L3D_REQUIRE(st.advanced);
     const DialogueNode* n2 = dialogue_find_node(*dialogue_find(dbank, 1), 2);
     L3D_REQUIRE(lang_observe_dialogue(prof, vbank, *n2) == 1); // 103

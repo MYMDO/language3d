@@ -96,6 +96,11 @@ int main() {
     L3D_REQUIRE(std::strcmp(sc.promptText(), "Clerk nearby - press E") == 0);
     L3D_REQUIRE(sc.pressE(now += 600)); // past the debounce window
     L3D_REQUIRE(sc.dialogueOpen());
+    // Wrong answer first: off-topic intent -> INCORRECT, clerk asks again,
+    // no ticket, dialogue stays open.
+    L3D_REQUIRE(sc.pressAnswer(3));
+    L3D_REQUIRE(sc.dialogueOpen());
+    L3D_REQUIRE(!sc.player().inventory->has(2, 1));
     L3D_REQUIRE(sc.pressAnswer(1)); // Yes -> terminal + ticket effect
     L3D_REQUIRE(sc.pressE(now += 100)); // dismiss
     sc.tick(16, now += 16, open_solid, nullptr); // pump: COLLECT completes

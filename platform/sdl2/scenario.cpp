@@ -177,26 +177,19 @@ bool Scenario::pressAnswer(int n) {
         return showFinal_;
     }
     if (n < 1 || n > 4) return true; // consumed, out of range
-    DialogueStep st =
-        dq_choose(dsession_, *dbank_, player_, log_, *qbank_, *ibank_, size_t(n - 1));
-    if (!st.advanced) return true;
+    DialogueStep st = dq_choose(dsession_, *dbank_, player_, log_, *qbank_,
+                                *ibank_, lang_, *vbank_, size_t(n - 1));
+    if (!st.advanced) {
+        // Wrong answer: the NPC asks again (verdict already recorded).
+        if (st.verdict == uint8_t(ResponseVerdict::INCORRECT))
+            say("Hmm, that doesn't help. Try again.");
+        refreshTexts();
+        return true;
+    }
     const DialogueDef* dd = dialogue_find(*dbank_, dsession_.dialogue);
     if (dd) {
         const DialogueNode* at = dialogue_find_node(*dd, dsession_.node);
-        if (at) {
-            lang_observe_dialogue(lang_, *vbank_, *at);
-            // The player's pick engages the entered node's vocabulary.
-            for (size_t i = 0; i < at->lang.vocab_count; ++i)
-                lang_.record(*vbank_, at->lang.vocab[i], LanguageEvent::USED);
-            // Content convention (see content/dialogues/README.md): choice 1
-            // is the constructive answer, so taking it counts as correct
-            // language use. This is the v1 proxy until real assessment.
-            if (n == 1) {
-                for (size_t i = 0; i < at->lang.vocab_count; ++i)
-                    lang_.record(*vbank_, at->lang.vocab[i],
-                                 LanguageEvent::CORRECT);
-            }
-        }
+        if (at) lang_observe_dialogue(lang_, *vbank_, *at);
     }
     if (st.effect.kind == uint8_t(EffectApply::APPLIED) &&
         dsession_.dialogue == SLICE_CLERK_DIALOGUE)

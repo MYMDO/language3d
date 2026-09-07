@@ -102,6 +102,16 @@ struct DialogueLangMeta {
 struct DialogueChoice {
     const char* text{nullptr};
     uint16_t next{DIALOGUE_NONE}; // node id, or NONE = dialogue ends here
+    // Language semantics of the response (all opaque content ids, 0 = none).
+    // intent: what the player means (e.g. request-ticket). The entry node
+    // declares which intents it accepts; evaluation matches them instead of
+    // trusting the choice position. vocab/grammar: what the response
+    // practices (recorded on use + verdict).
+    uint16_t intent{0};
+    uint16_t vocab[DIALOGUE_MAX_TAGS]{};
+    uint8_t vocab_count{0};
+    uint16_t grammar[DIALOGUE_MAX_TAGS]{};
+    uint8_t grammar_count{0};
 };
 
 struct DialogueNode {
@@ -113,6 +123,11 @@ struct DialogueNode {
     DialogueLangMeta lang{};
     DialogueCond cond{};     // entry requirement (orchestration evaluates)
     DialogueEffect effect{}; // applied on entry (orchestration applies)
+    // Expected response intents (0 = node declares none -> legacy USED-only
+    // path, no verdict). primary match = CORRECT, secondary = PARTIAL,
+    // otherwise INCORRECT.
+    uint16_t expect_primary{0};
+    uint16_t expect_secondary{0};
 };
 
 struct DialogueDef {

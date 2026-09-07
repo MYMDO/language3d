@@ -18,6 +18,7 @@
 // Rules: no heap, no exceptions, no RTTI, no virtual dispatch, no STL.
 #include "dialogue.h"
 #include "quest.h"
+#include "language.h" // profile/bank for verdict scoring (one-way)
 
 #include <cstddef>
 #include <cstdint>
@@ -36,6 +37,22 @@ struct EffectResult {
     uint16_t left{0};        // GIVE_ITEM leftover
     uint8_t quest_event{uint8_t(QuestEvent::IGNORED)}; // START_QUEST outcome
 };
+
+// Deterministic response verdict. Pure function of the entered node's
+// expectation set and the choice's declared intent — never of the choice
+// position. Nodes without expectations yield NONE (legacy USED-only path).
+enum class ResponseVerdict : uint8_t { NONE = 0, CORRECT, PARTIAL, INCORRECT };
+
+inline ResponseVerdict dq_evaluate(const DialogueNode& node,
+                                   const DialogueChoice& choice) {
+    if (node.expect_primary == 0 && node.expect_secondary == 0)
+        return ResponseVerdict::NONE;
+    if (choice.intent != 0 && choice.intent == node.expect_primary)
+        return ResponseVerdict::CORRECT;
+    if (choice.intent != 0 && choice.intent == node.expect_secondary)
+        return ResponseVerdict::PARTIAL;
+    return ResponseVerdict::INCORRECT;
+}
 
 // Node-entry condition truth against player facts.
 template <size_t INV>
@@ -121,18 +138,27 @@ bool dq_begin(DialogueSession& s, const DialogueBank& dbank,
     return true;
 }
 
+// Needs the language profile + bank: verdicts feed VocabularyProgress.
+#include "language.h"
+
 struct DialogueStep {
     bool advanced{false};
     uint8_t session_state{uint8_t(DialogueState::EMPTY)};
     EffectResult effect{};
     bool cond_rejected{false}; // target node cond unmet: session unchanged
+    uint8_t verdict{uint8_t(ResponseVerdict::NONE)};
 };
 
-// Advance by choice through the cond gate, then apply the entered effect.
-template <size_t QN, size_t INV>
+// Advance by choice through the cond gate, evaluate the response, record
+// its vocabulary (USED always; CORRECT/INCORRECT per verdict), then apply
+// the entered effect. CORRECT/PARTIAL advance; INCORRECT holds the session
+// on the current node (the NPC asks again) — the world consequence of a
+// wrong answer. Legacy nodes (no expectations) advance with USED only.
+template <size_t QN, size_t INV, size_t LN>
 DialogueStep dq_choose(DialogueSession& s, const DialogueBank& dbank,
                        PlayerState<INV>& p, QuestLog<QN>& log,
                        const QuestBank& qbank, const ItemBank& items,
+                       LanguageProfile<LN>& lang, const VocabularyBank& vbank,
                        size_t choice) {
     DialogueStep step{};
     step.session_state = s.state;
@@ -141,7 +167,8 @@ DialogueStep dq_choose(DialogueSession& s, const DialogueBank& dbank,
     if (!d) return step;
     const DialogueNode* at = dialogue_find_node(*d, s.node);
     if (!at || choice >= at->choice_count) return step;
-    const uint16_t next = at->choices[choice].next;
+    const DialogueChoice& ch = at->choices[choice];
+    const uint16_t next = ch.next;
     if (next != DIALOGUE_NONE) {
         const DialogueNode* to = dialogue_find_node(*d, next);
         if (!to) return step; // validated content never hits this
@@ -149,6 +176,20 @@ DialogueStep dq_choose(DialogueSession& s, const DialogueBank& dbank,
             step.cond_rejected = true;
             return step;
         }
+    }
+    const ResponseVerdict verdict = dq_evaluate(*at, ch);
+    step.verdict = uint8_t(verdict);
+    // The player's pick engages the choice vocabulary; the verdict scores it.
+    for (size_t i = 0; i < ch.vocab_count; ++i) {
+        lang.record(vbank, ch.vocab[i], LanguageEvent::USED);
+        if (verdict == ResponseVerdict::CORRECT)
+            lang.record(vbank, ch.vocab[i], LanguageEvent::CORRECT);
+        else if (verdict == ResponseVerdict::INCORRECT)
+            lang.record(vbank, ch.vocab[i], LanguageEvent::INCORRECT);
+    }
+    if (verdict == ResponseVerdict::INCORRECT) {
+        step.session_state = s.state; // stay: NPC asks again
+        return step;
     }
     if (!dialogue_choose(s, dbank, choice)) return step;
     step.advanced = true;

@@ -14,6 +14,9 @@ node <u16 nodeId> speaker=<npc|player|narrator> lang=<und|en|de|pl|es|fr>
      [effect=<NONE|GIVE_ITEM:i:c|SET_FLAG:b|ADD_COUNTER:i:n|ADD_XP:n|START_QUEST:q>]
 text <1..192 chars, single line>
 choice "<text>" -> <nodeId|END>     # up to 4 per node
+       [intent=<u16, 0 = none>]
+       [vocab=<u16,… up to 4>] [grammar=<u16,… up to 4>]
+node … [expect=<primary[:secondary]>]  # accepted response intents
 ```
 
 Rules:
@@ -24,9 +27,13 @@ Rules:
 - `cond` gates node entry (evaluated by the orchestration layer, inert in
   the dialogue engine); `effect` applies on node entry (rewards, flags,
   quest starts — never quest internals, which stay in the quest engine).
-- Content convention: choice 1 should be the constructive/cooperative
-  answer. The vertical slice counts taking it as correct language use
-  (v1 proxy until real assessment); other choices are neutral exposure.
+- Response evaluation (deterministic, no LLM): a choice's `intent` is
+  matched against the entry node's `expect` set — primary → CORRECT,
+  secondary → PARTIAL, otherwise INCORRECT. Nodes without `expect` keep
+  the legacy USED-only path. Shared intent ids (content namespace):
+  1=request-ticket, 2=smalltalk, 3=offtopic, 4=give-directions,
+  5=decline, 6=offer-help. Authoring rule: choice 1 should be the
+  constructive answer carrying the primary intent.
 - `vocab`/`grammar` are opaque content ids (language phase resolves them).
 - `#` starts a comment; blank lines ignored.
 - Texts may not contain `"` (choices) or newlines; C++-escaped by the tool.

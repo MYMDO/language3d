@@ -368,9 +368,11 @@ else()
     language3d_add_test(dialogue_quest_test dialogue_quest_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/engine/dialogue_quest.cpp)
     language3d_add_test(playable_quest_test playable_quest_test.cpp
-      ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC})
+      ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC}
+      ${GENERATED_VOCAB_SRC})
     add_dependencies(playable_quest_test
-      language3d_dialogues language3d_quests language3d_items)
+      language3d_dialogues language3d_quests language3d_items
+      language3d_vocab)
     language3d_add_test(language_test language_test.cpp ${GENERATED_VOCAB_SRC})
     add_dependencies(language_test language3d_vocab)
     language3d_add_test(language_scenario_test language_scenario_test.cpp

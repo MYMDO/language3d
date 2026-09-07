@@ -116,11 +116,11 @@ quest-test: $(GENERATED_QUEST_SRC)
 	/tmp/l3d_quest_test
 
 dialogue-quest-test:
-	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue_quest.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp tests/dialogue_quest_test.cpp -o /tmp/l3d_dialogue_quest_test
+	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue_quest.cpp engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/language.cpp tests/dialogue_quest_test.cpp -o /tmp/l3d_dialogue_quest_test
 	/tmp/l3d_dialogue_quest_test
 
-playable-quest-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC)
-	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/math.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) tests/playable_quest_test.cpp -o /tmp/l3d_playable_quest_test
+playable-quest-test: $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue.cpp engine/quest.cpp engine/player.cpp engine/item.cpp engine/math.cpp engine/language.cpp $(GENERATED_DIALOGUE_SRC) $(GENERATED_QUEST_SRC) $(GENERATED_ITEM_SRC) $(GENERATED_VOCAB_SRC) tests/playable_quest_test.cpp -o /tmp/l3d_playable_quest_test
 	/tmp/l3d_playable_quest_test
 
 $(GENERATED_VOCAB_SRC): $(wildcard content/vocabulary/*.vocab) tools/build_vocab.py

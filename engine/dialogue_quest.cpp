@@ -37,20 +37,24 @@ bool dq_selfcheck() {
     Inventory<4> inv{};
     inv.init();
     p.bind_inventory(&inv);
+    LanguageProfile<4> lang{};
+    LanguagePair pair{uint8_t(DialogueLang::PL), uint8_t(DialogueLang::EN)};
+    lang.init(pair);
+    static const VocabularyBank vbank{nullptr, 0};
 
     DialogueSession s{};
     if (!dq_begin(s, dbank, log, qbank, ibank, p, 1, 0x0100, nullptr))
         return false;
     if (s.node != 1) return false;
     // Node 2 is ticket-gated: advance rejected while ticketless.
-    DialogueStep st = dq_choose(s, dbank, p, log, qbank, ibank, 0);
+    DialogueStep st = dq_choose(s, dbank, p, log, qbank, ibank, lang, vbank, 0);
     if (st.advanced || !st.cond_rejected) return false;
     if (s.node != 1) return false;
     // Hand over the ticket, then pass the gate; node 3 gives the key.
     if (inv.add(ibank, 2, 1) != 0) return false;
-    st = dq_choose(s, dbank, p, log, qbank, ibank, 0);
+    st = dq_choose(s, dbank, p, log, qbank, ibank, lang, vbank, 0);
     if (!st.advanced || s.node != 2) return false;
-    st = dq_choose(s, dbank, p, log, qbank, ibank, 0);
+    st = dq_choose(s, dbank, p, log, qbank, ibank, lang, vbank, 0);
     if (!st.advanced || s.state != uint8_t(DialogueState::COMPLETED))
         return false;
     if (st.effect.kind != uint8_t(EffectApply::APPLIED)) return false;
