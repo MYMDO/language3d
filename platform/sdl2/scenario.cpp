@@ -110,10 +110,12 @@ Vec2 Scenario::clerkPos() const {
 }
 
 uint16_t Scenario::annaDialogue() const {
-    const VocabularyProgress* s = lang_.progress_of(SLICE_STATION_WORD);
-    if (s && mastery_of(*s) >= Mastery::FAMILIAR)
-        return SLICE_ANNA_FAMILIAR_DIALOGUE;
-    return SLICE_ANNA_DIALOGUE;
+    // Data-driven variant selection over Anna's group (1): the highest
+    // required mastery the profile meets wins, otherwise the fallback.
+    // (Previously a hardcoded mastery>=FAMILIAR check for dialogue 3.)
+    const uint16_t v =
+        dq_select_variant(lang_, *dbank_, SLICE_ANNA_VARIANT_GROUP);
+    return (v == DIALOGUE_NONE) ? SLICE_ANNA_DIALOGUE : v;
 }
 
 bool Scenario::pressE(uint32_t nowMs) {

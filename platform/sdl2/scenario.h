@@ -43,11 +43,10 @@ constexpr uint16_t SLICE_STATION_TAG = 3;
 constexpr uint16_t SLICE_MARKET_TAG = 10;
 constexpr uint16_t SLICE_HOME_TAG = 11;
 constexpr uint16_t SLICE_ANNA_DIALOGUE = 1;
-constexpr uint16_t SLICE_ANNA_FAMILIAR_DIALOGUE = 3;
+constexpr uint16_t SLICE_ANNA_VARIANT_GROUP = 1;
 constexpr uint16_t SLICE_CLERK_DIALOGUE = 2;
 constexpr uint16_t SLICE_QUEST = 1;
 constexpr uint16_t SLICE_TICKET = 2;
-constexpr uint16_t SLICE_STATION_WORD = 103;
 constexpr uint32_t SLICE_SAVE_VERSION_GUARD = 1;
 
 class Scenario {

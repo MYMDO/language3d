@@ -135,6 +135,14 @@ struct DialogueDef {
     uint16_t npc_tag{0}; // opaque content id (NPCAgent::nameTag namespace)
     uint8_t node_count{0};
     const DialogueNode* nodes{nullptr};
+    // Adaptive variant group (0 = standalone, legacy behavior). Dialogues
+    // sharing a group are interchangeable presentations of one conversation;
+    // selection picks the highest required mastery the profile meets, with
+    // the requirement-free entry as the guaranteed fallback (see
+    // dq_select_variant). require_word 0 = no requirement.
+    uint16_t variant_group{0};
+    uint16_t require_word{0};   // vocabulary id (shared namespace)
+    uint8_t require_mastery{0}; // Mastery value required on that word
 };
 
 struct DialogueBank {

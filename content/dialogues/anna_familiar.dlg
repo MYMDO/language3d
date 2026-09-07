@@ -1,9 +1,9 @@
 # Anna, familiar variant (Roadmap Phase 14).
 # Selected by the scenario when the player's station mastery reaches
 # FAMILIAR: same quest wiring (START_QUEST:1), harder A2 lines.
-# Dialogue id 3, NPC tag 1 (Anna).
+# Dialogue id 3, NPC tag 1 (Anna), variant group 1 (familiar tier).
+dialogue 3 npc=1 variant=1 require=103:3
 
-dialogue 3 npc=1
 node 1 speaker=npc lang=en cefr=A2 vocab=101,102 grammar=13
 text Hello again! Can you tell me where the station is?
 choice "Of course, follow me." -> 2

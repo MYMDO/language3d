@@ -12,7 +12,7 @@
 #   101=greeting 102=help 103=station 104=direction 105=thanks 106=farewell
 # Grammar tags: 11=imperative 12=wh-question 13=modal-can
 
-dialogue 1 npc=1
+dialogue 1 npc=1 variant=1
 node 1 speaker=npc lang=en cefr=A2 vocab=101,102 grammar=13
 text Excuse me, can you help me?
 choice "Yes, of course." -> 2

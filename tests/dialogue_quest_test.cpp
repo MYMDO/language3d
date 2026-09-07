@@ -157,6 +157,48 @@ int main() {
         L3D_REQUIRE(el.advanced && el.verdict == uint8_t(ResponseVerdict::NONE));
     }
 
+    // --- adaptive variant selection: mastery-gated, deterministic ---
+    {
+        // Group 5: fallback (21), LEARNING tier (22 on word 301),
+        // FAMILIAR tier (23 on word 301). Untiered dialogue 24 ignored.
+        static const char t[] = "V";
+        static const DialogueNode vn[] = {{1, 0, 0, {}, t, DialogueLangMeta{}, {}, {}}};
+        static const DialogueDef vdefs[] = {
+            {21, 7, 1, vn, 5, 0, 0},
+            {22, 7, 1, vn, 5, 301, 2},
+            {23, 7, 1, vn, 5, 301, 3},
+            {24, 7, 1, vn, 0, 0, 0},
+        };
+        static const DialogueBank vbank2{vdefs, 4};
+        L3D_REQUIRE(dialogue_validate_bank(vbank2, nullptr));
+        LanguageProfile<8> vp{};
+        vp.init(pair);
+        // No progress: fallback wins.
+        L3D_REQUIRE(dq_select_variant(vp, vbank2, 5) == 21);
+        // Unknown group / legacy group 0: NONE.
+        L3D_REQUIRE(dq_select_variant(vp, vbank2, 6) == DIALOGUE_NONE);
+        L3D_REQUIRE(dq_select_variant(vp, vbank2, 0) == DIALOGUE_NONE);
+        // LEARNING exact threshold: tier 22.
+        for (int i = 0; i < 3; ++i) L3D_REQUIRE(vp.record(vbank, 301, LanguageEvent::SEEN));
+        L3D_REQUIRE(dq_select_variant(vp, vbank2, 5) == 22);
+        // FAMILIAR: highest eligible tier wins.
+        for (int i = 0; i < 3; ++i) L3D_REQUIRE(vp.record(vbank, 301, LanguageEvent::CORRECT));
+        L3D_REQUIRE(dq_select_variant(vp, vbank2, 5) == 23);
+        // Tie-break: duplicate tier resolves to the lowest dialogue id.
+        static const DialogueDef tdefs[] = {
+            {31, 7, 1, vn, 9, 301, 2},
+            {30, 7, 1, vn, 9, 301, 2},
+        };
+        static const DialogueBank tbank{tdefs, 2};
+        L3D_REQUIRE(dq_select_variant(vp, tbank, 9) == 30);
+        // Missing variant: group with only gated entries, nothing met.
+        static const DialogueDef mdefs[] = {
+            {41, 7, 1, vn, 8, 302, 4},
+        };
+        static const DialogueBank mbank{mdefs, 1};
+        L3D_REQUIRE(dq_select_variant(vp, mbank, 8) == DIALOGUE_NONE);
+    }
+
     L3D_REQUIRE(dq_selfcheck());
 
     std::printf("dialogue-quest OK\n");

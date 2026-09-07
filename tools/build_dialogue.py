@@ -115,13 +115,24 @@ def parse_dlg(path):
             flush_node()
             if cur_d is not None:
                 dialogues.append(cur_d)
-            m = re.fullmatch(r"dialogue (\d+) npc=(\d+)", line)
+            m = re.fullmatch(
+                r"dialogue (\d+) npc=(\d+)(?: variant=(\d+))?"
+                r"(?: require=(\d+):(\d+))?", line)
             if not m:
                 raise Fail(where + ": bad dialogue header")
             did, npc = int(m.group(1)), int(m.group(2))
             if not (1 <= did <= 65534):
                 raise Fail(where + ": dialogue id out of range")
-            cur_d = {"id": did, "npc": npc, "nodes": []}
+            variant = int(m.group(3) or 0)
+            req_word = int(m.group(4) or 0)
+            req_level = int(m.group(5) or 0)
+            if variant > 65534 or req_word > 65534 or req_level > 4:
+                raise Fail(where + ": bad variant/requirement")
+            if req_level > 0 and req_word == 0:
+                raise Fail(where + ": require level needs a word")
+            cur_d = {"id": did, "npc": npc, "nodes": [],
+                     "variant": variant, "req_word": req_word,
+                     "req_level": req_level}
         elif line.startswith("node "):
             if cur_d is None:
                 raise Fail(where + ": node outside dialogue")
@@ -255,7 +266,9 @@ def emit(dialogues, out_path):
         parts.append("};")
     parts.append("static const DialogueDef defs[] = {")
     for d in dialogues:
-        parts.append("    {%d, %d, %d, nodes_%d}," % (d["id"], d["npc"], len(d["nodes"]), d["id"]))
+        parts.append("    {%d, %d, %d, nodes_%d, %d, %d, %d}," % (
+            d["id"], d["npc"], len(d["nodes"]), d["id"],
+            d["variant"], d["req_word"], d["req_level"]))
     parts.append("};")
     parts.append("")
     parts.append("} // namespace")

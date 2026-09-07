@@ -199,6 +199,43 @@ DialogueStep dq_choose(DialogueSession& s, const DialogueBank& dbank,
     return step;
 }
 
+// Deterministic adaptive variant selection (rules-based content selection,
+// not semantic/NLP/LLM evaluation). Among the dialogues sharing a variant
+// group, picks the eligible candidate with the highest required mastery;
+// ties break toward the lowest dialogue id. A requirement-free candidate
+// is the guaranteed fallback; with no group members (or none eligible and
+// no fallback) returns DIALOGUE_NONE. Legacy group-0 dialogues are never
+// selected through this function — open them by id as before.
+template <size_t LN>
+uint16_t dq_select_variant(const LanguageProfile<LN>& profile,
+                           const DialogueBank& bank, uint16_t group) {
+    if (group == 0) return DIALOGUE_NONE;
+    uint16_t best = DIALOGUE_NONE;
+    uint8_t best_level = 0;
+    bool have_best = false;
+    for (size_t i = 0; i < bank.count; ++i) {
+        const DialogueDef& d = bank.defs[i];
+        if (d.variant_group != group) continue;
+        bool eligible;
+        uint8_t level = 0;
+        if (d.require_word == 0) {
+            eligible = true; // fallback candidate
+        } else {
+            const VocabularyProgress* s = profile.progress_of(d.require_word);
+            level = d.require_mastery;
+            eligible = (s && uint8_t(mastery_of(*s)) >= d.require_mastery);
+        }
+        if (!eligible) continue;
+        if (!have_best || level > best_level ||
+            (level == best_level && d.id < best)) {
+            best = d.id;
+            best_level = level;
+            have_best = true;
+        }
+    }
+    return best;
+}
+
 // Deterministic self-check (no I/O, no heap). See entity_selfcheck().
 bool dq_selfcheck();
 
