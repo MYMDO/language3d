@@ -33,6 +33,8 @@ language3d
 
 # Local saves / test working files (never commit player data)
 *.save
+playtest-report/
+*.l3dr
 
 # Firmware / debug artifacts ship via GitHub Actions artifacts & Releases,
 # never through Git.

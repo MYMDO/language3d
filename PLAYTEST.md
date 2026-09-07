@@ -84,6 +84,32 @@ Correct answers advance dialogue and quests; off-topic answers get a
 "Hmm, that doesn't help" and the NPC asks again; quitting without `F5`
 loses progress; deleting `language3d.save` starts fresh.
 
+## Automated playtest
+
+Every build ships a deterministic self-check — no display needed:
+
+```text
+language3d --headless-playtest --all        # all 8 gameplay scenarios
+language3d --headless-playtest --scenario quest-flow
+language3d --replay <file.l3dr>             # re-verify a recording
+```
+
+Expected output ends with `8/8 scenarios passed` and exit code 0.
+To poke around interactively:
+
+```text
+language3d --playtest                        # console Test Center
+```
+
+It runs the same scenarios (`[1]`–`[8]`, `[9]` all), plus `[L]` event
+log, `[P]` replay last run, `[B]` write a `playtest-report/` bundle,
+`[R]` reset, `[Q]` quit. The eight scenarios: basic movement/collision,
+NPC proximity+facing+E, CORRECT/PARTIAL/INCORRECT verdicts, adaptive
+variant tiers, station quest start→claim, starter inventory, populated
+save/load round-trip with rejection paths, and the full Anna-to-claim
+vertical slice. Manual P0/P1/P2 play above stays in force — automation
+covers mechanics, never usability.
+
 ## How to report a bug
 
 Open a [GitHub issue](../../issues/new) with: OS + version, downloaded

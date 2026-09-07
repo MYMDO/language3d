@@ -34,6 +34,16 @@ jobs:
       - name: Test
         run: ctest --preset linux-release
 
+      - name: Headless Playtest
+        run: ./build-linux/language3d --headless-playtest --all
+
+      - name: Upload playtest report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-report-linux
+          path: playtest-report/
+
       - name: Package
         run: ./tools/package-linux.sh
 
@@ -80,6 +90,16 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build-windows -C Release --output-on-failure
+
+      - name: Headless Playtest
+        run: build-windows\Release\language3d.exe --headless-playtest --all
+
+      - name: Upload playtest report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-report-windows
+          path: playtest-report/
 
       - name: Set up MSVC environment (dumpbin)
         uses: ilammy/msvc-dev-cmd@v1
