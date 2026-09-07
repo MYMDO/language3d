@@ -1,0 +1,15 @@
+# Starter items (Roadmap Phase 9).
+# Vocabulary ids share the dialogue namespace: 103=station, 105=thanks,
+# 201=food, 202=fruit, 203=ticket/travel, 204=reading, 205=key/security.
+
+item 1 category=food stackable=1 max=10 weight=150 vocab=201,202
+name Apple
+
+item 2 category=ticket stackable=0 max=1 weight=5 vocab=103,203
+name Station ticket
+
+item 3 category=key stackable=0 max=1 weight=50 vocab=205
+name Rusty key
+
+item 4 category=book stackable=0 max=1 weight=300 vocab=204
+name Phrasebook

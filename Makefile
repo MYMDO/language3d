@@ -6,11 +6,12 @@ TARGET := language3d_mvp
 PC_CXXFLAGS := $(CXXFLAGS) -DL3D_PC_PROFILE
 GENERATED_ASSET_SRC := build/generated_assets.cpp
 GENERATED_DIALOGUE_SRC := build/generated_dialogue.cpp
+GENERATED_ITEM_SRC := build/generated_items.cpp
 SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp engine/world3.cpp $(GENERATED_ASSET_SRC) platform/sdl2/main.cpp platform/sdl2/platform_sdl2.cpp
 INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test validate-content
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test validate-content
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -92,8 +93,17 @@ dialogue-test: $(GENERATED_DIALOGUE_SRC)
 	$(CXX) $(CXXFLAGS) -Iengine engine/dialogue.cpp $(GENERATED_DIALOGUE_SRC) tests/dialogue_test.cpp -o /tmp/l3d_dialogue_test
 	/tmp/l3d_dialogue_test
 
+$(GENERATED_ITEM_SRC): $(wildcard content/items/*.item) tools/build_items.py
+	mkdir -p build
+	python3 tools/build_items.py content/items $@
+
+item-test: $(GENERATED_ITEM_SRC)
+	$(CXX) $(CXXFLAGS) -Iengine engine/item.cpp $(GENERATED_ITEM_SRC) tests/item_test.cpp -o /tmp/l3d_item_test
+	/tmp/l3d_item_test
+
 validate-content:
 	python3 tools/build_dialogue.py --check content/dialogues
+	python3 tools/build_items.py --check content/items
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test entity-test npc-test schedule-test npc-dispatch-test interact-test dialogue-test item-test
 	@echo "CORE HOST TESTS PASSED"

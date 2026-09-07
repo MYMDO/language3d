@@ -51,6 +51,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate dialogue content
         run: python3 tools/build_dialogue.py --check content/dialogues
+      - name: Validate item content
+        run: python3 tools/build_items.py --check content/items
 
   build-windows:
     name: Windows build + tests (native MSVC, no MSYS2)
