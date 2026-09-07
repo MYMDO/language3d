@@ -407,28 +407,46 @@ void Scenario::renderPanel(uint8_t* px, uint16_t w, uint16_t h,
     }
     const char* who = (dd->npc_tag == SLICE_CLERK_TAG) ? "Clerk:" : "Anna:";
     draw_text(px, w, h, stride, margin + 4, y0 + 6, who, 200);
-    // Greedy word wrap into at most 5 text lines.
+    // Greedy word wrap into at most 5 text lines. The line buffer covers
+    // the widest supported panel (256 cells); longer content wraps, and
+    // any remainder past the last line is dropped (never overflows).
     const int chars = (int(w) - 2 * (margin + 4)) / 8;
-    char lines[5][96]{};
+    const int perLine = chars < 250 ? chars : 250;
+    char lines[5][256]{};
     size_t li = 0, ci = 0;
     const char* p = at->text;
-    while (*p && li < 5) {
+    bool truncated = false;
+    while (*p && !truncated) {
         while (*p == ' ') ++p;
         if (!*p) break;
-        // Take whole words while they fit.
         const char* word = p;
         while (*p && *p != ' ') ++p;
         const size_t wlen = size_t(p - word);
-        if (ci > 0 && ci + 1 + wlen > size_t(chars)) {
+        if (ci > 0 && ci + 1 + wlen > size_t(perLine)) {
             lines[li][ci] = '\0';
             ++li;
             ci = 0;
-            if (li >= 5) break;
+            if (li >= 5) {
+                truncated = true;
+                break;
+            }
         }
-        if (ci > 0) lines[li][ci++] = ' ';
-        for (size_t k = 0; k < wlen && ci < 95; ++k) lines[li][ci++] = word[k];
+        if (ci > 0) {
+            if (ci >= 255) {
+                truncated = true;
+                break;
+            }
+            lines[li][ci++] = ' ';
+        }
+        for (size_t k = 0; k < wlen; ++k) {
+            if (ci >= 255) {
+                truncated = true;
+                break;
+            }
+            lines[li][ci++] = word[k];
+        }
     }
-    if (li < 5) lines[li][ci] = '\0';
+    if (!truncated && li < 5) lines[li][ci] = '\0';
     for (size_t r = 0; r <= li && r < 5; ++r) {
         if (!lines[r][0]) continue;
         draw_text(px, w, h, stride, margin + 4, y0 + 20 + int(r) * 10,

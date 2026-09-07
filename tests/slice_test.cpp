@@ -112,13 +112,13 @@ int main() {
     L3D_REQUIRE(std::strcmp(sc.objectiveText(), "Station quest claimed. +100 XP") == 0);
 
     // --- save / load round-trip through a real file ---
-    L3D_REQUIRE(sc.saveGame("/tmp/l3d_slice_test.save"));
+    L3D_REQUIRE(sc.saveGame("l3d_slice_test.save"));
     // Mutate locally, then reload and verify restoration.
-    L3D_REQUIRE(sc.loadGame("/tmp/l3d_slice_test.save"));
+    L3D_REQUIRE(sc.loadGame("l3d_slice_test.save"));
     qr = sc.quests().find(1);
     L3D_REQUIRE(qr && qr->state == uint8_t(QuestState::CLAIMED));
     L3D_REQUIRE(sc.player().xp == 100);
-    L3D_REQUIRE(!sc.loadGame("/tmp/l3d_slice_nope.save")); // missing file
+    L3D_REQUIRE(!sc.loadGame("l3d_slice_nope.save")); // missing file
 
     // --- closed learning loop: two more Anna talks -> FAMILIAR -> variant ---
     play_anna(sc, now);
@@ -127,8 +127,8 @@ int main() {
     L3D_REQUIRE(sc.annaDialogue() == 3);
 
     // --- reload keeps the new greeting: persistence affects next play ---
-    L3D_REQUIRE(sc.saveGame("/tmp/l3d_slice_test.save"));
-    L3D_REQUIRE(sc.loadGame("/tmp/l3d_slice_test.save"));
+    L3D_REQUIRE(sc.saveGame("l3d_slice_test.save"));
+    L3D_REQUIRE(sc.loadGame("l3d_slice_test.save"));
     L3D_REQUIRE(sc.annaDialogue() == 3);
 
     // --- panel rendering draws real pixels into a live framebuffer ---
