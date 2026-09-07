@@ -276,6 +276,9 @@ else()
     platform/sdl2/main.cpp
     platform/sdl2/platform_sdl2.cpp
     platform/sdl2/scenario.cpp
+    platform/sdl2/playtest/playtest.cpp
+    platform/sdl2/playtest/scenarios.cpp
+    platform/sdl2/playtest/playtest_cli.cpp
     ${LANGUAGE3D_ENGINE_SOURCES}
     ${GENERATED_ASSET_SRC}
     ${GENERATED_DIALOGUE_SRC}
@@ -408,6 +411,10 @@ else()
     add_test(NAME map-path-test
       COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_map_path.py
               ${CMAKE_CURRENT_SOURCE_DIR}/assets/map.txt 4 4 18 18)
+
+    # Headless playtest: all gameplay scenarios through one runner, no SDL.
+    add_test(NAME playtest
+      COMMAND language3d --headless-playtest --all)
 
     # NOTE: tests/display_test.cpp is intentionally not built. It targets the
     # retired RP2350 display/transport headers (rp2350_display.h,

@@ -1,6 +1,7 @@
 #include "../../engine/game.h"
 #include "../../platform/api/l3d_platform.h"
 #include "scenario.h"
+#include "playtest/playtest_cli.h"
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
@@ -82,7 +83,9 @@ static void print_memory_breakdown(){
 }
 
 int main(int argc, char* argv[]){
-    (void)argc; (void)argv; // SDL2 entry-point signature; no CLI args used.
+    // Playtest modes run before SDL init and never touch the platform layer.
+    const int pt = playtest::playtest_cli(argc, argv);
+    if (pt >= 0) return pt;
     if (!l3d_pf_init("Language 3D MVP — PC Linux")) {
         std::fprintf(stderr, "platform init failed\n");
         return 1;
