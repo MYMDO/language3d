@@ -1,5 +1,5 @@
 #include "../../engine/game.h"
-#include <SDL2/SDL.h>
+#include "../../platform/api/l3d_platform.h"
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
@@ -79,19 +79,13 @@ static void print_memory_breakdown(){
               << ((520u*1024u > embedded_single) ? (520u*1024u-embedded_single)/kib : 0.0) << " KiB\n"
               << "[MEM]   NOTE: resource-work/audio/commands/stack are deterministic upper bounds, not measured live usage.\n";
 }
+
 int main(int argc, char* argv[]){
     (void)argc; (void)argv; // SDL2 entry-point signature; no CLI args used.
-    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS)!=0){ std::fprintf(stderr,"SDL_Init failed: %s\n",SDL_GetError()); return 1; }
-    constexpr int TARGET_W = 1920;
-    constexpr int TARGET_H = 1080;
-    SDL_Window* w=SDL_CreateWindow("Language 3D MVP — PC Linux",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,TARGET_W,TARGET_H,SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE);
-    if(!w){ std::fprintf(stderr,"SDL window failed: %s\n",SDL_GetError()); SDL_Quit(); return 1; }
-    SDL_Renderer* r=SDL_CreateRenderer(w,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC); if(!r) r=SDL_CreateRenderer(w,-1,SDL_RENDERER_PRESENTVSYNC|SDL_RENDERER_SOFTWARE);
-    // Render directly to an explicit aspect-preserving destination rectangle.
-    // Do not use SDL logical-size scaling here: the desktop window may have a
-    // different client-area aspect ratio because of window decorations or resizing.
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-    SDL_Texture* t=SDL_CreateTexture(r,SDL_PIXELFORMAT_RGB565,SDL_TEXTUREACCESS_STREAMING,Config::WIDTH,Config::HEIGHT); if(!t){ std::fprintf(stderr,"texture failed: %s\n",SDL_GetError()); return 1; }
+    if (!l3d_pf_init("Language 3D MVP — PC Linux")) {
+        std::fprintf(stderr, "platform init failed\n");
+        return 1;
+    }
     // Large desktop buffers live on the heap, never on the thread stack. The engine
     // itself remains a caller-owned indexed8 framebuffer, preserving the portable ABI.
     std::vector<u8> pixels(MemoryBudget::FRAMEBUFFER8);
@@ -101,7 +95,7 @@ int main(int argc, char* argv[]){
     const AssetPackView game_assets = generated_assets();
     if (!game_assets.valid()) {
         std::fprintf(stderr, "generated asset pack invalid; refusing to run with mismatched content\n");
-        SDL_DestroyTexture(t); SDL_DestroyRenderer(r); SDL_DestroyWindow(w); SDL_Quit();
+        l3d_pf_shutdown();
         return 1;
     }
     game.set_assets(game_assets);
@@ -111,9 +105,10 @@ int main(int argc, char* argv[]){
     game.reset();
 
     SimulationClock sim_clock{};
-    bool run=true; uint32_t last=SDL_GetTicks(),stat=last; uint64_t frames=0, sim_ticks=0;
+    bool run=true; uint32_t last=l3d_pf_ticks_ms(),stat=last; uint64_t frames=0, sim_ticks=0;
     bool debug_camera=false;
     bool mouse_look=false;
+    bool fullscreen=false;
 #if defined(L3D_PC_PROFILE)
     std::cerr << "[ARCH] profile=PC-LINUX | internal=" << Config::WIDTH << "x" << Config::HEIGHT
               << " | present=1920x1080 | core=portable fixed16.16 | framebuffer=8-bit indexed\n"
@@ -125,10 +120,10 @@ int main(int argc, char* argv[]){
               << (MemoryBudget::TOTAL_RESERVED/1024.0) << " KiB / 520 KiB | headroom="
               << ((MemoryBudget::SRAM_BYTES-MemoryBudget::TOTAL_RESERVED)/1024.0) << " KiB\n";
 #endif
-    // Desktop input latch: held state is driven by KEYDOWN/KEYUP events, while the
-    // SDL keyboard snapshot is retained as a recovery path for backends that may
-    // drop an event during focus transitions. One-shot actions persist until a
-    // simulation tick consumes them.
+    // Desktop input latch: held state is driven by key edge events, while the
+    // platform key snapshot is retained as a recovery path for backends that
+    // may drop an event during focus transitions. One-shot actions persist
+    // until a simulation tick consumes them.
     struct InputLatch {
         bool up=false, down=false, left=false, right=false;
         bool strafe_left=false, strafe_right=false;
@@ -138,66 +133,61 @@ int main(int argc, char* argv[]){
     i16 latch_mouse_x = 0;
 
     while(run){
-        uint32_t now=SDL_GetTicks(); uint32_t frame_ms=now-last; last=now;
+        uint32_t now=l3d_pf_ticks_ms(); uint32_t frame_ms=now-last; last=now;
         InputState in{};
-        SDL_Event e;
-        while(SDL_PollEvent(&e)){
-            if(e.type==SDL_QUIT) { run=false; continue; }
-            if(e.type==SDL_WINDOWEVENT){
-                if(e.window.event==SDL_WINDOWEVENT_FOCUS_LOST){
-                    latch.up=latch.down=latch.left=latch.right=false;
-                    latch.strafe_left=latch.strafe_right=false;
-                    if(mouse_look){ SDL_SetRelativeMouseMode(SDL_FALSE); mouse_look=false; }
-                }
+        l3d_event ev{};
+        while(l3d_pf_poll(&ev)){
+            if(ev.type==L3D_EVENT_QUIT) { run=false; continue; }
+            if(ev.type==L3D_EVENT_FOCUS_LOST){
+                latch.up=latch.down=latch.left=latch.right=false;
+                latch.strafe_left=latch.strafe_right=false;
+                if(mouse_look){ l3d_pf_set_relative_mouse(0); mouse_look=false; }
             }
-            if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==SDL_BUTTON_LEFT){
-                SDL_SetRelativeMouseMode(SDL_TRUE);
+            if(ev.type==L3D_EVENT_MOUSE_BUTTON && ev.key==L3D_MOUSE_LEFT && ev.pressed){
+                l3d_pf_set_relative_mouse(1);
                 mouse_look=true;
-                SDL_ShowCursor(SDL_DISABLE);
+                l3d_pf_show_cursor(0);
             }
-            if(e.type==SDL_MOUSEMOTION && mouse_look){
-                const int rel = std::clamp(e.motion.xrel, -2048, 2048);
+            if(ev.type==L3D_EVENT_MOUSE_MOTION && mouse_look){
+                const int rel = std::clamp(int(ev.dx), -2048, 2048);
                 const i32 accum = i32(latch_mouse_x) + i32(rel);
                 latch_mouse_x = static_cast<i16>(std::clamp(accum, -32768, 32767));
             }
-            if(e.type==SDL_KEYDOWN && !e.key.repeat && e.key.keysym.scancode==SDL_SCANCODE_ESCAPE && mouse_look){
-                SDL_SetRelativeMouseMode(SDL_FALSE);
+            if(ev.type==L3D_EVENT_KEY_DOWN && !ev.repeat && ev.key==L3D_KEY_ESCAPE && mouse_look){
+                l3d_pf_set_relative_mouse(0);
                 mouse_look=false;
-                SDL_ShowCursor(SDL_ENABLE);
+                l3d_pf_show_cursor(1);
                 continue;
             }
-            if(e.type==SDL_KEYDOWN || e.type==SDL_KEYUP){
-                const bool down = (e.type==SDL_KEYDOWN);
-                const SDL_Scancode sc = e.key.keysym.scancode;
-                switch(sc){
-                    case SDL_SCANCODE_W: latch.up=down; break;
-                    case SDL_SCANCODE_S: latch.down=down; break;
-                    case SDL_SCANCODE_A: latch.strafe_left=down; break;
-                    case SDL_SCANCODE_D: latch.strafe_right=down; break;
-                    case SDL_SCANCODE_LEFT: latch.left=down; break;
-                    case SDL_SCANCODE_RIGHT: latch.right=down; break;
-                    case SDL_SCANCODE_UP: latch.up=down; break;
-                    case SDL_SCANCODE_DOWN: latch.down=down; break;
-                    case SDL_SCANCODE_Q: latch.strafe_left=down; break;
-                    case SDL_SCANCODE_C: latch.strafe_right=down; break;
+            if(ev.type==L3D_EVENT_KEY_DOWN || ev.type==L3D_EVENT_KEY_UP){
+                const bool down = (ev.type==L3D_EVENT_KEY_DOWN);
+                switch(ev.key){
+                    case L3D_KEY_W: latch.up=down; break;
+                    case L3D_KEY_S: latch.down=down; break;
+                    case L3D_KEY_A: latch.strafe_left=down; break;
+                    case L3D_KEY_D: latch.strafe_right=down; break;
+                    case L3D_KEY_LEFT: latch.left=down; break;
+                    case L3D_KEY_RIGHT: latch.right=down; break;
+                    case L3D_KEY_UP: latch.up=down; break;
+                    case L3D_KEY_DOWN: latch.down=down; break;
+                    case L3D_KEY_Q: latch.strafe_left=down; break;
+                    case L3D_KEY_C: latch.strafe_right=down; break;
                     default: break;
                 }
-                if(down && !e.key.repeat){
-                    switch(sc){
-                        case SDL_SCANCODE_E: latch.interact=true; break;
-                        case SDL_SCANCODE_L: latch.language=true; break;
-                        case SDL_SCANCODE_P: latch.progress=true; break;
-                        case SDL_SCANCODE_H: latch.help=true; break;
-                        case SDL_SCANCODE_ESCAPE: latch.escape=true; break;
-                        case SDL_SCANCODE_1: latch.answer=1; break;
-                        case SDL_SCANCODE_2: latch.answer=2; break;
-                        case SDL_SCANCODE_3: latch.answer=3; break;
-                        case SDL_SCANCODE_F3: debug_camera = !debug_camera; break;
-                        case SDL_SCANCODE_F11:
-                            {
-                                const Uint32 flags = SDL_GetWindowFlags(w);
-                                SDL_SetWindowFullscreen(w, (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
-                            }
+                if(down && !ev.repeat){
+                    switch(ev.key){
+                        case L3D_KEY_E: latch.interact=true; break;
+                        case L3D_KEY_L: latch.language=true; break;
+                        case L3D_KEY_P: latch.progress=true; break;
+                        case L3D_KEY_H: latch.help=true; break;
+                        case L3D_KEY_ESCAPE: latch.escape=true; break;
+                        case L3D_KEY_1: latch.answer=1; break;
+                        case L3D_KEY_2: latch.answer=2; break;
+                        case L3D_KEY_3: latch.answer=3; break;
+                        case L3D_KEY_F3: debug_camera = !debug_camera; break;
+                        case L3D_KEY_F11:
+                            fullscreen = !fullscreen;
+                            l3d_pf_set_fullscreen(fullscreen ? 1 : 0);
                             break;
                         default: break;
                     }
@@ -205,14 +195,12 @@ int main(int argc, char* argv[]){
             }
         }
 
-        SDL_PumpEvents();
-        const Uint8* ks = SDL_GetKeyboardState(nullptr);
-        in.up    = latch.up    || ks[SDL_SCANCODE_W] || ks[SDL_SCANCODE_UP];
-        in.down  = latch.down  || ks[SDL_SCANCODE_S] || ks[SDL_SCANCODE_DOWN];
-        in.left  = latch.left  || ks[SDL_SCANCODE_LEFT];
-        in.right = latch.right || ks[SDL_SCANCODE_RIGHT];
-        in.strafe_left  = latch.strafe_left  || ks[SDL_SCANCODE_A] || ks[SDL_SCANCODE_Q];
-        in.strafe_right = latch.strafe_right || ks[SDL_SCANCODE_D] || ks[SDL_SCANCODE_C];
+        in.up    = latch.up    || l3d_pf_key_down(L3D_KEY_W) || l3d_pf_key_down(L3D_KEY_UP);
+        in.down  = latch.down  || l3d_pf_key_down(L3D_KEY_S) || l3d_pf_key_down(L3D_KEY_DOWN);
+        in.left  = latch.left  || l3d_pf_key_down(L3D_KEY_LEFT);
+        in.right = latch.right || l3d_pf_key_down(L3D_KEY_RIGHT);
+        in.strafe_left  = latch.strafe_left  || l3d_pf_key_down(L3D_KEY_A) || l3d_pf_key_down(L3D_KEY_Q);
+        in.strafe_right = latch.strafe_right || l3d_pf_key_down(L3D_KEY_D) || l3d_pf_key_down(L3D_KEY_C);
         in.interact_pressed = latch.interact;
         in.language_pressed = latch.language;
         in.progress_pressed = latch.progress;
@@ -248,49 +236,13 @@ int main(int argc, char* argv[]){
         game.render(renderer,fb);
         if (debug_camera) renderer.draw_debug_camera(fb, game.player());
 
-        // Convert indexed8 directly into the streaming RGB565 texture. This removes
-        // the previous ~8 MiB ARGB8888 staging buffer and avoids a second full-frame
-        // copy. Palette conversion is a single LUT lookup per pixel.
-        void* tex_pixels = nullptr;
-        int tex_pitch = 0;
-        if (SDL_LockTexture(t, nullptr, &tex_pixels, &tex_pitch) != 0) {
-            std::fprintf(stderr, "texture lock failed: %s\n", SDL_GetError());
+        // Presentation (upload + letterbox + flip) is owned by the backend.
+        const auto& lut = renderer.palette().rgb565;
+        if (!l3d_pf_present_indexed8(fb.pixels, fb.width, fb.height, fb.stride, lut.data())) {
+            std::fprintf(stderr, "present failed\n");
             break;
         }
-        const auto& lut = renderer.palette().rgb565;
-        for (u16 y = 0; y < Config::HEIGHT; ++y) {
-            const u8* src = fb.pixels + static_cast<size_t>(y) * fb.stride;
-            u16* dst = reinterpret_cast<u16*>(static_cast<u8*>(tex_pixels) + static_cast<size_t>(y) * tex_pitch);
-            for (u16 x = 0; x < Config::WIDTH; ++x) dst[x] = lut[src[x]];
-        }
-        SDL_UnlockTexture(t);
-
-        int ww=0, hh=0;
-        SDL_GetRendererOutputSize(r,&ww,&hh);
-        // Fit the fixed 16:9 render surface into the actual drawable area without
-        // stretching. This keeps the reticle and every projected pixel centered
-        // and preserves the renderer's aspect ratio under resize/fullscreen.
-        const double src_aspect = double(Config::WIDTH) / double(Config::HEIGHT);
-        const double dst_aspect = (hh > 0) ? double(ww) / double(hh) : src_aspect;
-        SDL_Rect d{};
-        if (dst_aspect > src_aspect) {
-            d.h = hh;
-            d.w = static_cast<int>(hh * src_aspect + 0.5);
-            d.x = (ww - d.w) / 2;
-            d.y = 0;
-        } else {
-            d.w = ww;
-            d.h = static_cast<int>(ww / src_aspect + 0.5);
-            d.x = 0;
-            d.y = (hh - d.h) / 2;
-        }
-        SDL_RenderSetViewport(r, &d);
-        SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
-        SDL_RenderClear(r);
-        SDL_RenderCopy(r,t,nullptr,nullptr);
-        SDL_RenderPresent(r);
-        SDL_RenderSetViewport(r, nullptr);
-        ++frames; uint32_t sn=SDL_GetTicks(); if(sn-stat>=1000){ double fps=frames/((sn-stat)/1000.0); const auto& pl = game.player();
+        ++frames; uint32_t sn=l3d_pf_ticks_ms(); if(sn-stat>=1000){ double fps=frames/((sn-stat)/1000.0); const auto& pl = game.player();
             const auto reserved_kib = MemoryBudget::TOTAL_RESERVED / 1024.0;
             const auto free_kib = (MemoryBudget::SRAM_BYTES - MemoryBudget::TOTAL_RESERVED) / 1024.0;
             std::cerr<<"\r[STATS] FPS="<<std::fixed<<std::setprecision(1)<<fps
@@ -303,7 +255,6 @@ int main(int argc, char* argv[]){
                      <<" | HOST-RSS="<<linux_rss_kib()<<" KiB"
                      <<" | HOST-HWM="<<linux_hwm_kib()<<" KiB      "<<std::flush; frames=0;stat=sn; }
     }
-    SDL_SetRelativeMouseMode(SDL_FALSE);
-    SDL_ShowCursor(SDL_ENABLE);
-    std::cerr<<"\n"; SDL_DestroyTexture(t);SDL_DestroyRenderer(r);SDL_DestroyWindow(w);SDL_Quit(); return 0;
+    l3d_pf_shutdown();
+    std::cerr<<"\n"; return 0;
 }

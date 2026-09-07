@@ -65,24 +65,25 @@ RP2040 buttons and ST7789 wiring: [`docs/platforms/rp2040.md`](docs/platforms/rp
 ## Tests
 
 ```bash
-./tools/test.sh          # full host suite via CTest (19 tests)
+./tools/test.sh          # full host suite via CTest (20 tests)
 make test-all            # legacy Make wrapper (core subset)
 ```
 
 The suite covers engine core, renderer, assets, generated pack integrity,
-input, world/doors, camera alignment, map connectivity and the Phase-1 3D
-world model (stairs, headroom, bridges, trigger/region volumes). RP2040
-display and input require real hardware: CI verifies firmware compilation,
-linking and artifact presence, and documents hardware testing as a manual
-step.
+input, world/doors, camera alignment, map connectivity, the Phase-1 3D
+world model and the Platform API contract (null backend). RP2040 display
+and input require real hardware: CI verifies firmware compilation, linking
+and artifact presence, and documents hardware testing as a manual step.
 
 ## Platform direction
 
 Language3D evolves from tech MVP toward a 3D language-learning game
 platform: explore → see → understand → talk → act → solve → reward →
 remember. The engine grows in additive phases, each keeping all targets
-green — see [`docs/architecture/phase1-world3d.md`](docs/architecture/phase1-world3d.md)
-(True 3D world model: X/Y/Z, height fields, volumes; renderer unchanged).
+green. Game/platform separation is enforced by the thin Platform API
+(`platform/api/l3d_platform.h`, backends for SDL2 / RP2040 / null) —
+see [`docs/architecture.md`](docs/architecture.md) and
+[`docs/architecture/phase1-world3d.md`](docs/architecture/phase1-world3d.md).
 
 ## Releases
 

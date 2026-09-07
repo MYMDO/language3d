@@ -85,6 +85,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
   add_executable(language3d_rp2040
     platform/rp2040/src/main.cpp
     platform/rp2040/src/display.cpp
+    platform/rp2040/src/platform_rp2040.cpp
     engine/game.cpp
     engine/math.cpp
     engine/renderer.cpp
@@ -97,6 +98,7 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
 
   target_include_directories(language3d_rp2040 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/platform/api
     ${CMAKE_CURRENT_SOURCE_DIR}/platform/rp2040/include
     ${CMAKE_CURRENT_BINARY_DIR}
   )
@@ -183,12 +185,14 @@ else()
 
   add_executable(language3d
     platform/sdl2/main.cpp
+    platform/sdl2/platform_sdl2.cpp
     ${LANGUAGE3D_ENGINE_SOURCES}
     ${GENERATED_ASSET_SRC}
   )
   add_dependencies(language3d language3d_assets)
   target_include_directories(language3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/platform/api
     ${CMAKE_CURRENT_BINARY_DIR}
   )
   target_compile_definitions(language3d PRIVATE L3D_PC_PROFILE=1)
@@ -254,6 +258,12 @@ else()
     language3d_add_test(v24_camera_alignment_test v24_camera_alignment_test.cpp)
     language3d_add_test(world_test world_test.cpp)
     language3d_add_test(world3_test world3_test.cpp)
+    language3d_add_test(platform_test platform_test.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)
+    target_include_directories(platform_test PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/api
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/null
+    )
 
     # Map connectivity guard (gameplay start must reach the NPC target).
     find_package(Python3 COMPONENTS Interpreter REQUIRED)

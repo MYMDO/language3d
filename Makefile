@@ -5,11 +5,11 @@ SDL_LIBS := $(shell pkg-config --libs sdl2 2>/dev/null)
 TARGET := language3d_mvp
 PC_CXXFLAGS := $(CXXFLAGS) -DL3D_PC_PROFILE
 GENERATED_ASSET_SRC := build/generated_assets.cpp
-SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp $(GENERATED_ASSET_SRC) platform/sdl2/main.cpp
-INC := -Iengine
+SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp engine/world3.cpp $(GENERATED_ASSET_SRC) platform/sdl2/main.cpp platform/sdl2/platform_sdl2.cpp
+INC := -Iengine -Iplatform/api
 CORE_SRC := engine/game.cpp engine/math.cpp engine/renderer.cpp engine/assets.cpp engine/api.cpp
 
-.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test
+.PHONY: all clean run pc rp2040 rp2040-clean test-all core-test renderer-test asset-test generated-assets-test map-path-test world3-test platform-test
 all: $(TARGET)
 
 $(GENERATED_ASSET_SRC): assets/map.txt assets/textures.raw tools/embed_assets.py
@@ -59,5 +59,9 @@ world3-test:
 	$(CXX) $(CXXFLAGS) -Iengine engine/world3.cpp engine/math.cpp tests/world3_test.cpp -o /tmp/l3d_world3_test
 	/tmp/l3d_world3_test
 
-test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test
+platform-test:
+	$(CXX) $(CXXFLAGS) -Iplatform/api -Iplatform/null -Itests tests/platform_test.cpp platform/null/platform_null.cpp -o /tmp/l3d_platform_test
+	/tmp/l3d_platform_test
+
+test-all: map-path-test core-test renderer-test asset-test generated-assets-test world3-test platform-test
 	@echo "CORE HOST TESTS PASSED"
