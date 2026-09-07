@@ -12,7 +12,7 @@ $pkgDir = Join-Path $stage $pkgName
 
 $exe = Join-Path $build 'Release\language3d.exe'
 if (-not (Test-Path $exe)) { $exe = Join-Path $build 'language3d.exe' }
-if (-not (Test-Path $exe)) { throw "language3d.exe not found in $build — build first (preset windows-release)." }
+if (-not (Test-Path $exe)) { throw "language3d.exe not found in $build - build first (preset windows-release)." }
 
 Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
