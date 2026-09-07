@@ -45,7 +45,7 @@ jobs:
           if-no-files-found: error
 
   validate-content:
-    name: Content validation (.dlg/.item/.quest)
+    name: Content validation (.dlg/.item/.quest/.vocab)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
