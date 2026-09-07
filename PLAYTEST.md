@@ -1,20 +1,21 @@
-# Language3D v0.51.0 — Adaptive Dialogue Playtest
+# Language3D v0.51.1 — Integrated Playtest, Two Scenarios
 
-> **Experimental playtest build, not a finished game.** v0.50.0 verified
-> response evaluation; v0.51.0 adds the first adaptive learning loop:
-> your earned mastery changes how Anna speaks to you. Please report what
+> **Experimental playtest build, not a finished game.** v0.51.0 verified
+> response evaluation; v0.51.1 is the recommended build for public
+> playtesting: two playable scenarios (station + shop), adaptive dialogue
+> in both, and the integrated headless QA framework. Please report what
 > breaks — usability feedback (P2 below) is currently the most valuable.
 
 ## Download
 
 Get the archive for your platform from the
-[Releases page](../../releases) (`language3d-0.51.0-…`):
+[Releases page](../../releases) (`language3d-0.51.1-…`):
 
 | Platform | File | Notes |
 |---|---|---|
-| Linux x86_64 | `language3d-0.51.0-linux-x86_64.tar.gz` | unpack, run `./language3d-…/language3d` |
-| Windows x86_64 | `language3d-0.51.0-windows-x86_64.zip` | unpack, run `language3d.exe`; self-contained, no redistributable needed |
-| RP2040 (Pico) | `language3d-0.51.0-rp2040.uf2` | drag onto the `RPI-RP2` drive (see `docs/platforms/rp2040.md` for wiring) |
+| Linux x86_64 | `language3d-0.51.1-linux-x86_64.tar.gz` | unpack, run `./language3d-…/language3d` |
+| Windows x86_64 | `language3d-0.51.1-windows-x86_64.zip` | unpack, run `language3d.exe`; self-contained, no redistributable needed |
+| RP2040 (Pico) | `language3d-0.51.1-rp2040.uf2` | drag onto the `RPI-RP2` drive (see `docs/platforms/rp2040.md` for wiring) |
 
 ## Controls (desktop)
 
@@ -55,11 +56,13 @@ changes too. Save, quit, reload — the new greeting persists.
 ```text
 P0 — functionality
 [ ] Game launches, 3D maze renders, movement + mouse look work
-[ ] Anna and the clerk are visible as characters
+[ ] Anna, the clerk and the shopkeeper are visible as characters
 [ ] E opens dialogue near an NPC (prompt shows beforehand)
 [ ] Answers 1-3 advance dialogue; a wrong answer keeps it open
-[ ] Quest starts, progresses (talk → station → ticket → handover)
-[ ] Quest completes with +100 XP; F5 saves, F9 restores
+[ ] Scenario A quest starts, progresses (talk → station → ticket → handover)
+[ ] Scenario A quest completes with +100 XP; F5 saves, F9 restores
+[ ] Scenario B quest starts, progresses (talk → apple → handover to Anna)
+[ ] Scenario B quest completes with +50 XP; F5 saves, F9 restores
 
 P1 — language system
 [ ] Helpful answers score CORRECT, smalltalk PARTIAL, off-topic INCORRECT
@@ -99,26 +102,27 @@ loses progress; deleting `language3d.save` starts fresh.
 Every build ships a deterministic self-check — no display needed:
 
 ```text
-language3d --headless-playtest --all        # all 8 gameplay scenarios
+language3d --headless-playtest --all        # all 9 gameplay scenarios
 language3d --headless-playtest --scenario quest-flow
 language3d --replay <file.l3dr>             # re-verify a recording
 ```
 
-Expected output ends with `8/8 scenarios passed` and exit code 0.
+Expected output ends with `9/9 scenarios passed` and exit code 0.
 To poke around interactively:
 
 ```text
 language3d --playtest                        # console Test Center
 ```
 
-It runs the same scenarios (`[1]`–`[8]`, `[9]` all), plus `[L]` event
+It runs the same scenarios (`[1]`–`[9]`, `[10]` all), plus `[L]` event
 log, `[P]` replay last run, `[B]` write a `playtest-report/` bundle,
-`[R]` reset, `[Q]` quit. The eight scenarios: basic movement/collision,
+`[R]` reset, `[Q]` quit. The nine scenarios: basic movement/collision,
 NPC proximity+facing+E, CORRECT/PARTIAL/INCORRECT verdicts, adaptive
 variant tiers, station quest start→claim, starter inventory, populated
-save/load round-trip with rejection paths, and the full Anna-to-claim
-vertical slice. Manual P0/P1/P2 play above stays in force — automation
-covers mechanics, never usability.
+save/load round-trip with rejection paths, the full Anna-to-claim
+vertical slice, and the full shopkeeper apple-errand slice. Manual
+P0/P1/P2 play above stays in force — automation covers mechanics, never
+usability.
 
 ## How to report a bug
 
