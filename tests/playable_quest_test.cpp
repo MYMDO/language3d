@@ -33,7 +33,7 @@ int main() {
     const DialogueBank dbank = content_dialogues();
     const QuestBank qbank = content_quests();
     const ItemBank items = content_items();
-    L3D_REQUIRE(dbank.count == 2 && qbank.count == 1 && items.count == 4);
+    L3D_REQUIRE(dbank.count == 3 && qbank.count == 1 && items.count == 4);
 
     const uint16_t e_player = entities.spawn(EntityKind::PLAYER);
     const uint16_t e_anna = entities.spawn(EntityKind::NPC);

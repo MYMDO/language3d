@@ -89,7 +89,8 @@ releases**. The two sequences are tracked separately and never mixed:
 | Phase 11B — Quest integration | atomic rewards + dialogue wiring + playable quest | ✅ done, shipped **v0.46.0** |
 | Phase 12 — Language system | vocab/exposure/progress, assessment later | ✅ done, shipped **v0.47.0** |
 | Phase 13 — Save / Progression | versioned local persistence, atomic | ✅ done, shipped **v0.48.0** |
-| Phase 14 — Vertical slice | playable educational scenario | next |
+| Phase 14 — Vertical slice | playable 3D scenario + closed learning loop | ✅ done, shipped **v0.49.0** |
+| Phase 15 — Language-aware dialogue | level/topic variants, adaptive | next |
 
 Note: phase numbers are logical, not chronological — Phase 2 (world)
 landed as v0.35.0 *before* Phase 1 (platform) as v0.36.0. That is

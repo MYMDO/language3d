@@ -46,6 +46,8 @@ l3d_key_t map_scancode(SDL_Scancode sc) {
         case SDL_SCANCODE_3: return L3D_KEY_3;
         case SDL_SCANCODE_F3: return L3D_KEY_F3;
         case SDL_SCANCODE_F11: return L3D_KEY_F11;
+        case SDL_SCANCODE_F5: return L3D_KEY_F5;
+        case SDL_SCANCODE_F9: return L3D_KEY_F9;
         default: break;
     }
     return L3D_KEY_UNKNOWN;
@@ -73,6 +75,8 @@ SDL_Scancode unmap_key(uint8_t key) {
         case L3D_KEY_3: return SDL_SCANCODE_3;
         case L3D_KEY_F3: return SDL_SCANCODE_F3;
         case L3D_KEY_F11: return SDL_SCANCODE_F11;
+        case L3D_KEY_F5: return SDL_SCANCODE_F5;
+        case L3D_KEY_F9: return SDL_SCANCODE_F9;
         default: break;
     }
     return SDL_SCANCODE_UNKNOWN;

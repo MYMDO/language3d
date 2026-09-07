@@ -24,6 +24,9 @@ Rules:
 - `cond` gates node entry (evaluated by the orchestration layer, inert in
   the dialogue engine); `effect` applies on node entry (rewards, flags,
   quest starts — never quest internals, which stay in the quest engine).
+- Content convention: choice 1 should be the constructive/cooperative
+  answer. The vertical slice counts taking it as correct language use
+  (v1 proxy until real assessment); other choices are neutral exposure.
 - `vocab`/`grammar` are opaque content ids (language phase resolves them).
 - `#` starts a comment; blank lines ignored.
 - Texts may not contain `"` (choices) or newlines; C++-escaped by the tool.

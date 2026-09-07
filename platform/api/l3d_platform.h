@@ -32,6 +32,7 @@ typedef enum l3d_key {
     L3D_KEY_ESCAPE,
     L3D_KEY_1, L3D_KEY_2, L3D_KEY_3,
     L3D_KEY_F3, L3D_KEY_F11,
+    L3D_KEY_F5, L3D_KEY_F9, // save / load (one-shot actions, desktop)
     L3D_KEY_COUNT
 } l3d_key_t;
 

@@ -17,8 +17,8 @@ public:
     void render(SoftwareRaycaster& renderer, Framebuffer8& framebuffer);
     const Player& player() const { return player_; }
     const NPC& npc() const { return npc_; }
-    EntityPool<8>& sprites() { return sprites_; }
-    const EntityPool<8>& sprites() const { return sprites_; }
+    SpritePool<8>& sprites() { return sprites_; }
+    const SpritePool<8>& sprites() const { return sprites_; }
     const Progress& progress() const { return progress_; }
     const DoorSystem<8>& doors() const { return doors_; }
     Mode mode() const { return mode_; }
@@ -31,7 +31,7 @@ private:
     Mode mode_{Mode::Explore};
     const char* status_{"EXPLORE AND FIND THE NPC"};
     AssetPackView assets_{};
-    EntityPool<8> sprites_{};
+    SpritePool<8> sprites_{};
     DoorSystem<8> doors_{};
 };
 

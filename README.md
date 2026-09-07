@@ -56,16 +56,20 @@ Click the window to capture the mouse (`Esc` releases it).
 | `A`/`D`, `Q`/`C` | strafe left / right |
 | arrows `←`/`→`, mouse | turn |
 | `E` / `L` / `P` / `H` | interact / language / progress / help |
-| `1`–`3` | quiz answer |
+| `1`–`3` | quiz answer / dialogue choice |
 | `F3` | camera debug probe |
+| `F5` / `F9` | save / load scenario (`language3d.save`) |
 | `F11` | fullscreen toggle |
+
+Walk to Anna or the clerk (prompt appears), `E` to talk, `1`–`3` to
+answer — see [`docs/architecture/vertical-slice.md`](docs/architecture/vertical-slice.md).
 
 RP2040 buttons and ST7789 wiring: [`docs/platforms/rp2040.md`](docs/platforms/rp2040.md).
 
 ## Tests
 
 ```bash
-./tools/test.sh          # full host suite via CTest (34 tests)
+./tools/test.sh          # full host suite via CTest (36 tests)
 make test-all            # legacy Make wrapper (core subset)
 ```
 

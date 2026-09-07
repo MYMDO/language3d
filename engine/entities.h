@@ -29,8 +29,10 @@ struct SpriteBatch {
 };
 
 // No heap allocation: fixed-size pool for the default MCU scene.
+// (Named SpritePool: it stores SpriteEntity billboards. The generic
+// EntityPool lives in entity.h and owns gameplay entity identity.)
 template <size_t N>
-class EntityPool {
+class SpritePool {
 public:
     bool add(const SpriteEntity& e) {
         if (count_ >= N) return false;

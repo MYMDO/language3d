@@ -91,12 +91,8 @@ if(LANGUAGE3D_PLATFORM STREQUAL "rp2040")
     engine/renderer.cpp
     engine/assets.cpp
     engine/api.cpp
-    engine/api.cpp
-    engine/world3.cpp
     engine/world3.cpp
     engine/entity.cpp
-    engine/entity.cpp
-    engine/npc.cpp
     engine/npc.cpp
     engine/schedule.cpp
     engine/npc_dispatch.cpp
@@ -279,10 +275,16 @@ else()
   add_executable(language3d
     platform/sdl2/main.cpp
     platform/sdl2/platform_sdl2.cpp
+    platform/sdl2/scenario.cpp
     ${LANGUAGE3D_ENGINE_SOURCES}
     ${GENERATED_ASSET_SRC}
+    ${GENERATED_DIALOGUE_SRC}
+    ${GENERATED_QUEST_SRC}
+    ${GENERATED_ITEM_SRC}
+    ${GENERATED_VOCAB_SRC}
   )
-  add_dependencies(language3d language3d_assets)
+  add_dependencies(language3d language3d_assets language3d_dialogues
+    language3d_quests language3d_items language3d_vocab)
   target_include_directories(language3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
     ${CMAKE_CURRENT_SOURCE_DIR}/platform/api
@@ -380,6 +382,17 @@ else()
     language3d_add_test(save_test save_test.cpp
       ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC} ${GENERATED_VOCAB_SRC})
     add_dependencies(save_test language3d_quests language3d_items
+      language3d_vocab)
+    language3d_add_test(font_test font_test.cpp)
+    language3d_add_test(slice_test slice_test.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdl2/scenario.cpp
+      ${GENERATED_DIALOGUE_SRC} ${GENERATED_QUEST_SRC} ${GENERATED_ITEM_SRC}
+      ${GENERATED_VOCAB_SRC})
+    target_include_directories(slice_test PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdl2
+    )
+    add_dependencies(slice_test
+      language3d_dialogues language3d_quests language3d_items
       language3d_vocab)
     language3d_add_test(platform_test platform_test.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/platform/null/platform_null.cpp)

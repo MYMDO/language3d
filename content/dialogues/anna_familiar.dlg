@@ -1,0 +1,20 @@
+# Anna, familiar variant (Roadmap Phase 14).
+# Selected by the scenario when the player's station mastery reaches
+# FAMILIAR: same quest wiring (START_QUEST:1), harder A2 lines.
+# Dialogue id 3, NPC tag 1 (Anna).
+
+dialogue 3 npc=1
+node 1 speaker=npc lang=en cefr=A2 vocab=101,102 grammar=13
+text Hello again! Can you tell me where the station is?
+choice "Of course, follow me." -> 2
+choice "Sorry, I am in a hurry." -> 3
+node 2 speaker=npc lang=en cefr=A2 vocab=103 grammar=12 effect=START_QUEST:1
+text Wonderful! Could you show me the quickest way there?
+choice "Go straight and turn left." -> 4
+choice "I don't know the way." -> 5
+node 3 speaker=npc lang=en cefr=A1 vocab=106
+text No problem. Have a nice day!
+node 4 speaker=npc lang=en cefr=A1 vocab=105
+text Thank you very much!
+node 5 speaker=npc lang=en cefr=A1 vocab=106
+text Maybe someone else can help. Goodbye!

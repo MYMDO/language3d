@@ -1,5 +1,6 @@
 #include "../../engine/game.h"
 #include "../../platform/api/l3d_platform.h"
+#include "scenario.h"
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
@@ -98,11 +99,26 @@ int main(int argc, char* argv[]){
         l3d_pf_shutdown();
         return 1;
     }
-    game.set_assets(game_assets);
-    std::cerr << "[ASSET] map=" << game_assets.map_width() << "x" << game_assets.map_height()
+    game.set_assets(game_assets);    std::cerr << "[ASSET] map=" << game_assets.map_width() << "x" << game_assets.map_height()
               << " | textures=" << unsigned(game_assets.texture_count())
               << " | bytes=" << game_assets.size << "\n";
     game.reset();
+
+    // Phase 14 vertical slice: scenario orchestration over the live game.
+    // The maze game runs unchanged; the slice reads player state, mirrors
+    // NPC sprites, consumes E/answers/F5/F9 when it handles them, and draws
+    // its panel/HUD into the framebuffer before presentation.
+    Scenario scenario{};
+    const DialogueBank slice_dbank = content_dialogues();
+    const QuestBank slice_qbank = content_quests();
+    const ItemBank slice_ibank = content_items();
+    const VocabularyBank slice_vbank = content_vocabulary();
+    bool sliceOn = scenario.init(&slice_dbank, &slice_qbank, &slice_ibank,
+                                 &slice_vbank);
+    if (!sliceOn) std::fprintf(stderr, "scenario init failed; maze only\n");
+    auto slice_solid = [](void* ctx, int32_t x, int32_t y) {
+        return static_cast<Game*>(ctx)->solid(x, y);
+    };
 
     SimulationClock sim_clock{};
     bool run=true; uint32_t last=l3d_pf_ticks_ms(),stat=last; uint64_t frames=0, sim_ticks=0;
@@ -128,6 +144,7 @@ int main(int argc, char* argv[]){
         bool up=false, down=false, left=false, right=false;
         bool strafe_left=false, strafe_right=false;
         bool interact=false, language=false, progress=false, help=false, escape=false;
+        bool save=false, load=false;
         u8 answer=0;
     } latch;
     i16 latch_mouse_x = 0;
@@ -185,6 +202,8 @@ int main(int argc, char* argv[]){
                         case L3D_KEY_2: latch.answer=2; break;
                         case L3D_KEY_3: latch.answer=3; break;
                         case L3D_KEY_F3: debug_camera = !debug_camera; break;
+                        case L3D_KEY_F5: latch.save=true; break;
+                        case L3D_KEY_F9: latch.load=true; break;
                         case L3D_KEY_F11:
                             fullscreen = !fullscreen;
                             l3d_pf_set_fullscreen(fullscreen ? 1 : 0);
@@ -208,6 +227,38 @@ int main(int argc, char* argv[]){
         in.escape_pressed = latch.escape;
         in.answer = latch.answer;
         in.mouse_x = mouse_look ? latch_mouse_x : 0;
+
+        // Vertical slice wiring (no Game changes: read state, own sprites,
+        // consume handled keys, draw panel before presentation).
+        if (sliceOn) {
+            Transform3 slicePlayer{};
+            slicePlayer.pos =
+                Vec3{game.player().pos.x, game.player().pos.y, Fx{}};
+            slicePlayer.yaw = game.player().angle_turn;
+            scenario.setPlayer(slicePlayer);
+            scenario.tick(frame_ms, now, slice_solid, &game);
+            game.sprites().clear();
+            SpriteEntity sprA{};
+            sprA.pos = scenario.annaPos();
+            sprA.texture = 1;
+            sprA.width_scale = 32;
+            sprA.height_scale = 64;
+            SpriteEntity sprC = sprA;
+            sprC.pos = scenario.clerkPos();
+            game.sprites().add(sprA);
+            game.sprites().add(sprC);
+            if (latch.interact && scenario.pressE(now)) latch.interact = false;
+            if (latch.answer && scenario.pressAnswer(latch.answer))
+                latch.answer = 0;
+            if (latch.save) {
+                scenario.saveGame("language3d.save");
+                latch.save = false;
+            }
+            if (latch.load) {
+                scenario.loadGame("language3d.save");
+                latch.load = false;
+            }
+        }
 
         bool consumed_one_shot = false;
         bool consumed_mouse = false;
@@ -235,6 +286,7 @@ int main(int argc, char* argv[]){
         }
         game.render(renderer,fb);
         if (debug_camera) renderer.draw_debug_camera(fb, game.player());
+        if (sliceOn) scenario.renderPanel(fb.pixels, fb.width, fb.height, fb.stride);
 
         // Presentation (upload + letterbox + flip) is owned by the backend.
         const auto& lut = renderer.palette().rgb565;

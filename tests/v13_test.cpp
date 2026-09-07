@@ -15,7 +15,7 @@ int main() {
     L3D_REQUIRE(l3d::material_texture(pack, 1) == 0);
     L3D_REQUIRE(l3d::material_texture(pack, 15) == 0);
 
-    l3d::EntityPool<8> pool;
+    l3d::SpritePool<8> pool;
     L3D_REQUIRE(pool.add(l3d::SpriteEntity{l3d::Vec2{l3d::Fx::from_raw(400000), l3d::Fx::from_raw(400000)}, 1, 0, 32, 64}));
     L3D_REQUIRE(pool.add(l3d::SpriteEntity{l3d::Vec2{l3d::Fx::from_raw(500000), l3d::Fx::from_raw(500000)}, 1, 0, 32, 64}));
     const auto before0 = pool.data()[0].pos.x.raw;
