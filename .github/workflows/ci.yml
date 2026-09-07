@@ -102,8 +102,10 @@ jobs:
 
       - name: Reproducibility guard (no developer-local paths)
         run: |
-          if grep -rn --include='*.txt' --include='*.cmake' --include='*.json' --include='*.y*ml' \
-              -e '/home/wm' -e '/mnt/data' . --exclude-dir=pico-sdk --exclude-dir=build* .; then
+          if grep -rn --include='*.txt' --include='*.cmake' --include='*.json' \
+              --exclude-dir=.git --exclude-dir=pico-sdk --exclude-dir='build*' \
+              -e '/home/' -e '/mnt/data' \
+              CMakeLists.txt CMakePresets.json Makefile tools platform engine tests; then
             echo "error: developer-local absolute path leaked into build files" >&2
             exit 1
           fi
