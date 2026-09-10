@@ -33,8 +33,9 @@ Click the window to capture the mouse (`Esc` releases it).
 
 ## What to play
 
-Launch with `./language3d_mvp` (station scenario) or
-`./language3d_mvp --scenario shop`.
+Launch with `./language3d` (station scenario) or
+`./language3d --scenario shop`
+(`./language3d_mvp` instead if you built via the legacy `Makefile`).
 
 **Scenario A — Getting to the Station.** Start at the maze entrance,
 explore east to the plaza (around 18,18), talk to **Anna** ("Yes, of
