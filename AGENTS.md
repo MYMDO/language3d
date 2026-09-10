@@ -3,6 +3,26 @@
 Project: portable fixed-point 3D language-learning game (Linux / Windows / RP2040+ST7789).
 Single version source: `VERSION` file. Releases only on `v*` tags (`release.yml`).
 
+## Mission (Pareto rules)
+
+Transform the MVP into the smallest convincing, playable, publicly releasable
+3D game/demo. Product context: `docs/PRODUCT.md`; done means `docs/MVP.md`;
+what's next lives in `docs/ROADMAP.md` — read the relevant one before acting.
+
+- At every step, work on the highest **Impact × Confidence / Effort** item.
+  Priority order: broken functionality → core loop → input/controls → player
+  clarity → stability → minimal UI → content for the loop → build reliability →
+  polish → optional features. Never work below a higher-priority blocker.
+- **Pareto gate**: before implementing, confirm the task is in the highest
+  current impact class. A correctness/stability blocker outranks the formula.
+- Small, reversible changes; reuse existing systems; no speculative
+  architecture, no rewrites without measurable benefit, no new dependencies
+  without justification. "Cool" is not a criterion.
+- Verify every meaningful change (build, relevant tests, behavior check,
+  regression scan) and never claim success without verification.
+- Token discipline: read only task-relevant files, prefer targeted search,
+  reuse `docs/architecture/` as context cache instead of re-deriving it.
+
 ## Build & test (exact commands)
 
 ```bash
