@@ -62,6 +62,20 @@ Target: 5–10 people who have never seen Language3D, covering both scenarios.
 `tester / scenario / phase (blind|directed) / observation (quote) / stuck-time /
 expected-vs-actual / artifacts attached / suspected class (P0|P1|P2|Arch)`
 
+### 4b. Time-to-first-success (per tester, per scenario — blind phase only)
+
+Record wall-clock timestamps from launch; they locate the Pareto bottleneck
+faster than any opinion:
+
+`tester / scenario / understands-objective (mm:ss or —) /
+first-successful-interaction (mm:ss) / completes-objective (mm:ss or —) /
+help-given (no|yes — what exactly)`
+
+"Understands objective" = tester states the goal in their own words (right or
+wrong — record the wording). A row with interaction at 0:45 but completion at —
+is a different problem class than a row stuck before first interaction; do not
+merge them during collection. Classification happens afterwards, per section 5.
+
 ## 5. Promotion criteria (observation → triaged issue)
 
 - **P0 functional**: the launch→result chain is uncompletable (crash, hang,
